@@ -137,3 +137,34 @@ class JQuantsArchive(ReadOnlyEvidence):
                     found.add(n)
             if found != wanted.keys(): raise ContractError("jquants_source_locator_missing")
         return {"status": "PASS", "observations": len(observations), "files": len(grouped)}
+
+    def bulk_channels(self, plan):
+        """Tie channel claims to saved manifest/list bytes, separately from delivery time."""
+        result = {}
+        for m in plan['manifests']:
+            try:
+                raw, _ = self._bytes(m['artifact']['relative_path'])
+                if sha256(raw) != m['artifact']['byte_sha256']: raise ContractError('source_changed_during_audit')
+                manifest = json.loads(raw)
+                endpoint = '/' + m['dataset'].replace('_', '/')
+                if manifest.get('mode') != 'bulk' or manifest.get('endpoint') != endpoint:
+                    raise ContractError('acquisition_channel_unknown')
+                relative = (Path(m['artifact']['relative_path']).parent / 'bulk_list.json').as_posix()
+                raw, evidence = self.evidence(relative)
+                if sha256(raw) != manifest.get('bulk_list_sha256'): raise ContractError('bulk_list_integrity_failed')
+                listed = json.loads(raw)['data']
+                for f in manifest['files']:
+                    matches = [x for x in listed if x.get('Key') == f.get('source_key')]
+                    if len(matches) != 1 or matches[0].get('Size') != f['bytes']:
+                        raise ContractError('bulk_channel_file_mismatch')
+                    relative = (Path(m['artifact']['relative_path']).parent / f['file']).as_posix()
+                    result[relative] = {'status': 'PASS', 'channel': 'bulk_csv', 'endpoint': endpoint,
+                        'file_sha256': f['sha256'], 'source_key': f['source_key'],
+                        'manifest_artifact': m['artifact'], 'bulk_list_artifact': evidence,
+                        'historical_delivery_observed': False}
+            except (ContractError, KeyError, ValueError, TypeError) as exc:
+                reason = str(exc) if isinstance(exc, ContractError) else 'bulk_channel_schema_invalid'
+                for f in plan['files']:
+                    if f['dataset'] == m['dataset']:
+                        result[f['relative_path']] = {'status': 'BLOCKED', 'missing_reason': reason}
+        return result

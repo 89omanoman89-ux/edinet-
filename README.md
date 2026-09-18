@@ -12,7 +12,7 @@
 ローカル原本の難例・確率標本を分けた限定監査は [P2受入監査](docs/P2.md) を参照してください。
 P2で残った102件のmetadata欠損の調査結果は [metadata欠損監査](docs/METADATA_GAPS.md) に記録しています。
 固定標本の限定的な財務標準化・訂正vintage・原本lineageは [P3実装記録](docs/P3.md) を参照してください。
-既存J-Quantsのread-only監査・PIT結合条件と、証跡不足による実joinのBLOCKEDは [P4実装記録](docs/P4.md) に記録しています。
+既存J-Quantsのread-only監査と、日付ごとの直接観測による限定的な正のPIT結合は [P4実装記録](docs/P4.md) に記録しています。公式scheduleを用いるpublic reconstructionであり、system replayは未確立です。
 
 ## 最初に読む
 

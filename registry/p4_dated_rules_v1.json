@@ -1,0 +1,28 @@
+{
+  "definition_version": "p4-direct-dated-v1",
+  "evidence_levels": ["observed_historical_acquisition", "official_provider_schedule_reconstruction", "direct_dated_observation", "current_reconstruction", "unknown"],
+  "replay": "public_reconstruction",
+  "system_replay": "NOT ESTABLISHED",
+  "identity_rule": "EDINET filer edinetCode + exact secCode -> exact master Date/Code; required dates only; no interval interpolation or name join",
+  "accepted_document_types": ["120", "130"],
+  "accepted_product_categories": ["011"],
+  "product_meaning": "domestic shares; includes preferred shares; not a claim of ordinary-share classification",
+  "accepted_markets": ["0101", "0102", "0104", "0105", "0106", "0107", "0111", "0112", "0113"],
+  "listing_basis": "direct_dated_listing_observation",
+  "price_rule": {"id": "bulk_same_day_data_next_midnight_v1", "channel": "bulk_csv", "nominal_dataset_update_JST": "16:30 approximately", "public_available_at_rule": "next calendar day 00:00 JST", "basis": "official provider schedule reconstruction of the underlying unadjusted daily observation; not the historical availability of this regenerated monthly object", "scope_evidence": ["update", "bulk", "bars"], "is_observed_timestamp": false, "is_delivery_guarantee": false},
+  "master_rule": "Date is a direct dated listing observation; use no lifetime interval; future entry-date master is validation evidence outside decision features",
+  "calendar_rule": "current reconstruction of scheduled full-day sessions, historical publication time unknown; no OHLC/volume used for scheduling; not a decision feature",
+  "outcome_rule": "separate ex-post observation: traded / no_observed_trade / price_unavailable / ambiguous; never roll entry forward based on outcome",
+  "unknown_channel": "BLOCKED; do not reuse REST or institutional SFTP timing",
+  "spec_version": "J-Quants API V2 unversioned web specification captured 2026-09-18; byte hashes below pin the inspected version",
+  "specs": {
+    "update": {"url": "https://jpx-jquants.com/ja/spec/data-update", "sha256": "f8111d3dfefe2f3a53e51bf6a6bd0b67484de75a456c1148e42c84cc60b28566"},
+    "bulk": {"url": "https://jpx-jquants.com/ja/spec/bulk", "sha256": "8760efe927110c7fcf747650528717eed8d26f3d151a3e481bc82cd1bdf1ee77"},
+    "master": {"url": "https://jpx-jquants.com/ja/spec/eq-master", "sha256": "89db4ab4fd5c2148966bc4c87a801dfc11208dffcd8254c167f41af4bbe99e7d"},
+    "product": {"url": "https://jpx-jquants.com/ja/spec/eq-master/product-category", "sha256": "83c011e151c79f349b97d29f96c6c4acaf0848566d4f13852d2c857491c7f122"},
+    "bars": {"url": "https://jpx-jquants.com/ja/spec/eq-bars-daily", "sha256": "585e89509e4dfb119499cfdaa190d1106232d413395c54952249d9c489a5efa0"},
+    "edinet": {"url": "https://disclosure2dl.edinet-fsa.go.jp/guide/static/disclosure/download/ESE140206.pdf", "version": "2026-06 API v2, section 3-1-2-2 items 14/15, printed p.46", "sha256": "20b20e00739edf3a04d3dbd93ad55c06b1fb6fbb30375b5f06faae1e18c899b7"}
+  },
+  "rights_review": "BLOCKED",
+  "export_allowed": false
+}
