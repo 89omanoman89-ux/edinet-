@@ -33,28 +33,15 @@ def binary_key(identifier):
 
 def verify_frozen_inputs(inventory,output):
     """Final full rehash, including old snapshots and CURRENT; no digest reuse."""
-    from coverage_inventory import bounded_map
-    from expansion_archive import lines
-    inventory=private_path(inventory);store=PrivateStore(private_path(output))
+    from coverage_inventory import verify_inventory_inputs
+    inventory=private_path(inventory);output=private_path(output)
     plan=json.loads((inventory/'inventory_plan.json').read_bytes())['plan']
     roots={r['id']:private_path(r['path']) for r in plan['roots']}
-    if any(store.root==p or p in store.root.parents or store.root in p.parents for p in roots.values()):raise ContractError('preservation_output_overlap')
-    files=list(lines(inventory/'source_files.jsonl'))
-    expected={(f['root_id'],f['relative_path']) for f in files}
-    actual={(rid,p.relative_to(root).as_posix()) for rid,root in roots.items() for p in root.rglob('*') if p.is_file()}
-    if expected!=actual:raise ContractError('input_file_set_changed')
-    def verify(f):
-        p=(roots[f['root_id']]/f['relative_path']).resolve()
-        if roots[f['root_id']] not in p.parents:raise ContractError('input_path_escape')
-        before=p.stat();h=file_hash(p);after=p.stat()
-        if (before.st_size,before.st_mtime_ns)!=(after.st_size,after.st_mtime_ns):raise ContractError('input_changed_during_read')
-        if (h,after.st_size,after.st_mtime_ns)!=(f['byte_sha256'],f['byte_count'],f['mtime_ns']):raise ContractError('input_bytes_changed')
-    for _ in bounded_map(verify,files):pass
-    proof={'status':'PASS','files_rehashed':len(files),'bytes_rehashed':sum(f['byte_count'] for f in files),
-        'source_files_sha256':file_hash(inventory/'source_files.jsonl'),'observed_at':utcnow(),
-        'comparison':'exact file set + all bytes SHA256 + byte count + mtime, including prior CURRENT',
-        'code_sha':file_hash(Path(__file__))}
-    store.publish('preservation_proof.json',encoded(proof));return proof
+    if any(output==p or p in output.parents or output in p.parents for p in (*roots.values(),inventory)):
+        raise ContractError('preservation_output_overlap')
+    proof=verify_inventory_inputs(inventory)
+    PrivateStore(output).publish('preservation_proof.json',encoded(proof));return proof
+
 
 
 def coverage_records(documents,processed):
@@ -83,6 +70,13 @@ def coverage_records(documents,processed):
 def write_expansion_coverage(plan,out,processed,job_results):
     from expansion_archive import lines
     inventory=Path(plan['inventory']);months=defaultdict(set);states=Counter();years=defaultdict(Counter)
+    # Older undated partitions refer to source_files by ID; dated ones embed evidence.
+    references={a for p in lines(inventory/'expansion_queue.jsonl') for a in p['input_artifacts'] if isinstance(a,str)}
+    referenced={}
+    if references:
+        for f in lines(inventory/'source_files.jsonl'):
+            if f['file_id'] in references:
+                referenced[f['file_id']]={k:f[k] for k in ('file_id','root_id','relative_path','byte_sha256')}
     by_doc={d:r for r in job_results for d in r['doc_ids']}
     archive_manifest=json.loads((Path(plan['archive_index'])/'cross_archive_index.json').read_bytes())
     metadata_failures={r['relative_path'] for r in archive_manifest['failures']}
@@ -115,7 +109,15 @@ def write_expansion_coverage(plan,out,processed,job_results):
         for p in lines(inventory/'expansion_queue.jsonl'):
             r=dict(p,prior_status=p['status'],rights_review='BLOCKED',export_allowed=False)
             source=p['source'];status='BLOCKED';reason=p.get('reason') or 'input_partition_not_available'
-            if p['input_artifacts']:
+            artifacts=[referenced.get(a) if isinstance(a,str) else a for a in p['input_artifacts']]
+            r['resolved_input_artifacts']=artifacts
+            if any(a is None for a in artifacts):
+                reason='artifact_reference_unresolved'
+                r['execution_scope']='input_reference_validation'
+            elif p['month']=='unknown' or (p['status']=='UNKNOWN' and not artifacts):
+                status='UNKNOWN';reason=p.get('reason') or 'row_date_not_available'
+                r['execution_scope']='undated_or_unobserved_input; no dated execution inferred'
+            elif artifacts:
                 if source=='edinet_original':
                     docs=months[p['month'],p['table'].removeprefix('ZIP:')]
                     outcomes=[by_doc.get(d) for d in docs]
@@ -124,13 +126,13 @@ def write_expansion_coverage(plan,out,processed,job_results):
                     r['job_ids']=sorted({x['job_id'] for x in outcomes if x})
                     r['execution_scope']='P3_P4_P5_P55_for_available_originals'
                 elif source=='edinet_metadata':
-                    bad=any(a['root_id']+'/'+a['relative_path'] in metadata_failures for a in p['input_artifacts'])
+                    bad=any(a['root_id']+'/'+a['relative_path'] in metadata_failures for a in artifacts)
                     status='BLOCKED' if bad else 'COMPLETE';reason='metadata_index_rejected_input' if bad else 'read_only_cross_archive_metadata_index; raw absence retained'
                     r['execution_scope']='metadata_inventory_and_revision_discovery'
                 elif source=='jquants':
                     if p['table']=='indices_topix_daily':reason='dataset_outside_existing_P4_contract'
                     else:
-                        cached=all((Path(plan['row_cache'])/a['byte_sha256']/'manifest.json').is_file() for a in p['input_artifacts'])
+                        cached=all((Path(plan['row_cache'])/a['byte_sha256']/'manifest.json').is_file() for a in artifacts)
                         status='COMPLETE' if cached else 'BLOCKED'
                         reason='all_saved_rows_cached_and_roundtripped; PIT rows require EDINET and dated evidence' if cached else 'jquants_row_cache_missing_or_failed'
                     r['execution_scope']='source_inventory; EDINET-linked PIT outcomes are separate'

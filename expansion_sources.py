@@ -162,12 +162,15 @@ def build_derived_index(source,output):
 
 
 def indexed_bundle(index,p3,selected,output):
+    from metadata_gap_audit import guard_output
     index,p3,output=private_path(index),private_path(p3),private_path(output)
+    m=json.loads((index/'manifest.json').read_bytes())
+    source=private_path(m['source_root'])
+    guard_output(output, [index,p3,source], 'bundle_output_overlap')
     store=PrivateStore(output)
     if any(output.iterdir()):raise ContractError('bundle_already_exists')
-    m=json.loads((index/'manifest.json').read_bytes())
     if file_hash(index/'derived.sqlite')!=m['database_sha256']:raise ContractError('derived_cache_corrupt')
-    source=private_path(m['source_root']);raw=(source/'bundle.json').read_bytes()
+    raw=(source/'bundle.json').read_bytes()
     if sha256(raw)!=m['source_bundle_sha256']:raise ContractError('source_bundle_changed')
     bundle=json.loads(raw)
     docs=[json.loads(line) for line in (p3/'documents.jsonl').read_bytes().splitlines()]

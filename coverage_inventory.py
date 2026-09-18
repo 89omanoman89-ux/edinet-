@@ -546,6 +546,34 @@ def run(plan, output):
     return inventory.finish()
 
 
+def verify_inventory_inputs(inventory):
+    """Rehash the entire frozen input set, including old snapshots and CURRENT."""
+    inventory=private_path(inventory)
+    plan=json.loads((inventory/'inventory_plan.json').read_bytes())['plan']
+    roots={r['id']:private_path(r['path']) for r in plan['roots']}
+    catalog=inventory/'source_files.jsonl';catalog_sha=file_hash(catalog)
+    with catalog.open(encoding='utf-8') as stream:files=[json.loads(line) for line in stream]
+    expected={(f['root_id'],f['relative_path']) for f in files}
+    if len(expected)!=len(files):raise ContractError('duplicate_frozen_file')
+    actual={(rid,p.relative_to(root).as_posix()) for rid,root in roots.items() for p in root.rglob('*') if p.is_file()}
+    if expected!=actual:raise ContractError('input_file_set_changed')
+    def verify(f):
+        root=roots[f['root_id']];p=(root/f['relative_path']).resolve()
+        if root not in p.parents:raise ContractError('input_path_escape')
+        LocalArchive._outside_git(p)
+        before=p.stat();h=file_hash(p);after=p.stat()
+        if (before.st_size,before.st_mtime_ns,before.st_ino)!=(after.st_size,after.st_mtime_ns,after.st_ino):
+            raise ContractError('input_changed_during_read')
+        if (h,after.st_size,after.st_mtime_ns)!=(f['byte_sha256'],f['byte_count'],f['mtime_ns']):
+            raise ContractError('input_bytes_changed')
+    for _ in bounded_map(verify,files):pass
+    if file_hash(catalog)!=catalog_sha:raise ContractError('frozen_inventory_changed')
+    return {'status':'PASS','files_rehashed':len(files),'bytes_rehashed':sum(f['byte_count'] for f in files),
+        'source_files_sha256':catalog_sha,'observed_at':utcnow(),
+        'comparison':'exact file set + all bytes SHA256 + byte count + mtime, including prior CURRENT',
+        'code_sha':file_hash(Path(__file__))}
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--plan', required=True)

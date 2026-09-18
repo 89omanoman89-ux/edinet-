@@ -12,7 +12,7 @@ from evidence_core import ContractError
 from financial_facts import reverse_verify
 from filing_catalog import edinet_metadata
 from local_edinet import LocalArchive
-from metadata_gap_audit import open_evidence, snapshot_fingerprints
+from metadata_gap_audit import open_evidence, snapshot_fingerprints, evidence_roots, guard_output
 from p5_acquisition import json_value
 from source_acquisition import PrivateStore, encoded, sha256
 from source_documentation import acceptance_states, documentation_acceptance
@@ -111,9 +111,7 @@ def verify_source_rows(store,bundle,synthetic=False):
 def run(edinet_root,p3_snapshot,input_dir,private_dir,snapshot,*,synthetic=False,compact_originals=False,document_limit=10,raw_store=None):
     if not re.fullmatch(r'[A-Za-z0-9_-]+',snapshot):raise ContractError('invalid_snapshot_id')
     p3,source=Path(p3_snapshot).resolve(),Path(input_dir).resolve();output=(Path(private_dir)/snapshot).resolve()
-    for path in (p3,source,Path(edinet_root).resolve()):
-        LocalArchive._outside_git(path)
-        if path==output or path in output.parents:raise ContractError('output_inside_input')
+    guard_output(output, [p3, source, Path(raw_store or source).resolve(), *evidence_roots(edinet_root)])
     store=PrivateStore(output)
     if any(output.iterdir()):raise ContractError('snapshot_already_exists')
     before=snapshot_fingerprints(p3);source_before=snapshot_fingerprints(source)

@@ -91,3 +91,16 @@ P4対象外のTOPIXや、原本がない加工行の依存不足を消さない�
 `source_catalog.json`は全ローカルmetadata・加工行index・検証済みJ-Quants cacheへの私有参照を持つ。
 PITに結合されなかったsource行も所在とhashを追跡できるが、canonical/PIT値へ昇格しない。
 publication前にoffline tests、CI、固定標本、全入力の保存証明をhash固定したacceptance gateが必要。
+
+出力先とcache先は、仮想indexだけでなく、参照先の全原本root・旧snapshot・共有source storeとも
+重ならないことを、directory作成前に検査する。再開時には棚卸しの全ファイル集合と
+全bytes・SHA・mtimeを再確認し、その後にcheckpointを再利用する。
+
+再実行にはplanが固定した抽出コードを使用する。コード更新後の既存成果物を検査する場合は、
+`python expansion_runner.py --output /PRIVATE/new-expansion --verify-only`を使える。
+この操作は入力と完了済みcheckpointを再検証するだけで、未完了区画を実行しない。
+抽出時のコードhashと後続の検証コードhashを区別し、旧成果物を書き換えない。
+
+全量展開frameは既存P3入口に合わせてprimaryを内部の`challenge`欄に渡すが、
+P2で固定したchallenge/probability標本を再定義するものではない。
+全量cohortの所属は`expansion_plan.json`を正とし、元P2選択・固定cross-year標本は不変とする。

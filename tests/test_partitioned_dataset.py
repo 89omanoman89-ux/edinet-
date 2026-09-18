@@ -10,7 +10,7 @@ import zipfile
 
 from evidence_core import ContractError
 from expansion_runner import reconstructable_files,replay_stage_file
-from partitioned_dataset import publish_federation,PartitionedDataset,merge_entity,coverage_records,binary_key,write_expansion_coverage
+from partitioned_dataset import publish_federation,PartitionedDataset,merge_entity,coverage_records,binary_key,write_expansion_coverage,verify_frozen_inputs
 from source_acquisition import encoded,sha256
 import test_dataset_package as fixtures
 
@@ -75,6 +75,41 @@ class PartitionedDatasetTests(unittest.TestCase):
     def test_index_key_keeps_hex_and_text_namespaces_distinct(self):
         self.assertNotEqual(binary_key('a'*32),binary_key(('a'*32).encode().hex()))
 
+    def frozen_inventory(self):
+        inventory=self.root/'preservation-inventory';inventory.mkdir()
+        raw=self.root/'originals';raw.mkdir();file=raw/'synthetic.bin';file.write_bytes(b'synthetic bytes')
+        (inventory/'inventory_plan.json').write_bytes(encoded({'plan':{'roots':[{'id':'raw','path':str(raw)}]}}))
+        (inventory/'source_files.jsonl').write_bytes(encoded({'root_id':'raw','relative_path':file.name,
+            'byte_sha256':sha256(file.read_bytes()),'byte_count':file.stat().st_size,'mtime_ns':file.stat().st_mtime_ns})+b'\n')
+        return inventory,raw,file
+
+    def test_preservation_rejects_source_overlap_before_creating_output(self):
+        inventory,raw,file=self.frozen_inventory();before=file.read_bytes()
+        for parent in (inventory,raw):
+            output=parent/'must-not-exist'
+            with self.assertRaisesRegex(ContractError,'preservation_output_overlap'):
+                verify_frozen_inputs(inventory,output)
+            self.assertFalse(output.exists())
+        self.assertEqual(file.read_bytes(),before)
+
+    def test_preservation_rejects_changed_raw_without_output(self):
+        inventory,raw,file=self.frozen_inventory();file.write_bytes(b'changed')
+        output=self.root/'not-published'
+        with self.assertRaisesRegex(ContractError,'input_bytes_changed'):
+            verify_frozen_inputs(inventory,output)
+        self.assertFalse(output.exists())
+
+    def test_preservation_checks_complete_file_set_and_mtime(self):
+        import os
+        inventory,raw,file=self.frozen_inventory();output=self.root/'proof'
+        stat=file.stat();os.utime(file,ns=(stat.st_atime_ns,stat.st_mtime_ns+1000000000))
+        with self.assertRaisesRegex(ContractError,'input_bytes_changed'):verify_frozen_inputs(inventory,output)
+        os.utime(file,ns=(stat.st_atime_ns,stat.st_mtime_ns))
+        extra=raw/'unexpected';extra.write_bytes(b'new')
+        with self.assertRaisesRegex(ContractError,'input_file_set_changed'):verify_frozen_inputs(inventory,output)
+        extra.unlink()
+        self.assertEqual(verify_frozen_inputs(inventory,output)['files_rehashed'],1)
+
     def test_empirical_publication_requires_completed_gates(self):
         (self.root/'expansion_plan.json').write_bytes(encoded(self.plan))
         with self.assertRaisesRegex(ContractError,'final_acceptance_gate_missing'):publish_federation(self.root,'final')
@@ -97,9 +132,26 @@ class PartitionedDatasetTests(unittest.TestCase):
         with gzip.open(out/'expansion_queue.jsonl.gz','rt') as f:observed=[json.loads(x) for x in f]
         self.assertEqual(observed[0]['status'],'COMPLETE')
         self.assertEqual(observed[1]['reason'],'jquants_row_cache_missing_or_failed')
-        self.assertEqual(observed[2]['prior_status'],'UNKNOWN');self.assertEqual(observed[2]['status'],'BLOCKED')
+        self.assertEqual(observed[2]['prior_status'],'UNKNOWN');self.assertEqual(observed[2]['status'],'UNKNOWN')
         profiles=json.loads((out/'coverage_artifact_profiles.json').read_bytes())
         self.assertEqual(profiles['document_coverage.jsonl.gz']['row_count'],2)
+
+    def test_undated_artifact_ids_resolve_without_inventing_date_or_completion(self):
+        inv=self.root/'inventory';inv.mkdir();out=self.root/'reports';out.mkdir();idx=self.root/'index';idx.mkdir()
+        (inv/'document_coverage.jsonl').write_bytes(b'')
+        artifact={'file_id':'synthetic-file','root_id':'raw','relative_path':'synthetic.json','byte_sha256':'0'*64}
+        (inv/'source_files.jsonl').write_bytes(encoded(artifact)+b'\n')
+        base={'source':'edinet_metadata','table':'documents','month':'unknown','status':'UNKNOWN',
+              'reason':'row_date_not_available','input_artifacts':['synthetic-file']}
+        rows=[base,dict(base,input_artifacts=['missing-file'])]
+        (inv/'expansion_queue.jsonl').write_bytes(b''.join(encoded(r)+b'\n' for r in rows))
+        (idx/'cross_archive_index.json').write_bytes(encoded({'failures':[]}))
+        write_expansion_coverage({'inventory':str(inv),'archive_index':str(idx),'row_cache':str(self.root/'absent')},out,{},[])
+        with gzip.open(out/'expansion_queue.jsonl.gz','rt') as f:a,b=map(json.loads,f)
+        self.assertEqual(a['status'],'UNKNOWN');self.assertEqual(a['month'],'unknown')
+        self.assertEqual(a['resolved_input_artifacts'],[artifact])
+        self.assertEqual(b['status'],'BLOCKED');self.assertEqual(b['reason'],'artifact_reference_unresolved')
+        self.assertEqual(b['input_artifacts'],['missing-file'])
 
     def test_exact_stage_file_reconstruction(self):
         # Name the source directories exactly as the snapshot reference specifies.

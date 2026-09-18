@@ -8,11 +8,12 @@ import shutil
 import tempfile
 import zipfile
 
-from coverage_inventory import private_path,file_hash
+from coverage_inventory import private_path,file_hash,verify_inventory_inputs
 from evidence_core import ContractError
 from expansion_archive import CrossArchive,SqlLinks,lines,make_frame
 from revision_series import revision_closure
 from source_acquisition import PrivateStore,encoded,sha256,utcnow
+from metadata_gap_audit import evidence_roots,guard_output
 
 
 def code_identity():
@@ -40,7 +41,13 @@ def partition_components(components,months,*,limit=30):
 def plan_expansion(inventory,archive_index,derived_index,jquants_root,output,*,limit=30,row_cache=None):
     inventory,output=private_path(inventory),private_path(output)
     dependencies=[inventory,private_path(archive_index),private_path(derived_index),private_path(jquants_root)]
-    if any(output==p or output in p.parents or p in output.parents for p in dependencies):raise ContractError('plan_input_overlap')
+    inventory_plan=json.loads((inventory/'inventory_plan.json').read_bytes())['plan']
+    dependencies.extend(private_path(r['path']) for r in inventory_plan['roots'])
+    dependencies.extend(evidence_roots(archive_index))
+    source_manifest=json.loads((Path(derived_index)/'manifest.json').read_bytes())
+    dependencies.append(private_path(source_manifest['source_root']))
+    guard_output(output, dependencies, 'plan_input_overlap')
+    guard_output(row_cache or output/'row-cache', dependencies, 'cache_overlaps_source')
     store=PrivateStore(output)
     if any(output.iterdir()):raise ContractError('snapshot_already_exists')
     archive=CrossArchive(archive_index,store)
@@ -77,7 +84,7 @@ def plan_expansion(inventory,archive_index,derived_index,jquants_root,output,*,l
             'row_cache':str(private_path(row_cache or output/'row-cache')),
             'archive_manifest_sha256':file_hash(Path(archive_index)/'cross_archive_index.json'),
             'derived_manifest_sha256':file_hash(Path(derived_index)/'manifest.json'),
-            'input_hashes':{n:file_hash(inventory/n) for n in ('source_files.jsonl','document_coverage.jsonl','expansion_queue.jsonl')},
+            'input_hashes':{n:file_hash(inventory/n) for n in ('inventory_plan.json','source_files.jsonl','document_coverage.jsonl','expansion_queue.jsonl')},
             'raw_doc_id_count':len(available),'selection_rule':'all available official originals, sorted month/doc, indivisible revision components; never outcome substitution',
             'rights_review':'BLOCKED','export_allowed':False,'system_replay':'NOT ESTABLISHED'}
         store.publish('expansion_plan.json',encoded(plan))
@@ -174,7 +181,9 @@ def execute_job(plan,job,root,plan_sha,*,synthetic=False,codec=None):
     if plan['code_files']!=code_identity():raise ContractError('execution_code_changed_since_plan')
     codec=codec or ParquetCodec(compression_level=9,compact=True)
     folder=Path(root)/'jobs'/job['job_id']
-    if (folder/'result.json').exists():return validate_checkpoint(folder,plan_sha)
+    if (folder/'result.json').exists():
+        verify_inventory_inputs(plan['inventory'])
+        return validate_checkpoint(folder,plan_sha)
     if folder.exists():raise ContractError('interrupted_job_requires_new_attempt_directory')
     out=PrivateStore(folder)
     result={'job_id':job['job_id'],'month':job['month'],'doc_ids':job['doc_ids'],'plan_sha256':plan_sha,
@@ -230,21 +239,31 @@ def prewarm_market_cache(plan,root):
     PrivateStore(Path(root)/'cache-check').publish('result.json',encoded(proof))
 
 
-def run(output,*,limit=None,workers=1):
+def run(output,*,limit=None,workers=1,verify_only=False):
     root=private_path(output);raw=(root/'expansion_plan.json').read_bytes();plan=json.loads(raw);digest=sha256(raw)
-    if plan['code_files']!=code_identity():raise ContractError('execution_code_changed_since_plan')
+    if not verify_only and plan['code_files']!=code_identity():raise ContractError('execution_code_changed_since_plan')
     for key,name in [('archive_index','cross_archive_index.json'),('derived_index','manifest.json')]:
         expected=plan['archive_manifest_sha256' if key=='archive_index' else 'derived_manifest_sha256']
         if file_hash(Path(plan[key])/name)!=expected:raise ContractError('dependency_manifest_changed')
     for name,h in plan['input_hashes'].items():
         if file_hash(Path(plan['inventory'])/name)!=h:raise ContractError('frozen_inventory_changed')
+    preservation=verify_inventory_inputs(plan['inventory'])
+    proof_raw=encoded(preservation)
+    PrivateStore(root/'input-checks').publish(sha256(proof_raw)+'.json',proof_raw)
     if not 1<=workers<=3:raise ContractError('invalid_worker_count')
+    if verify_only and any(not (root/'jobs'/j['job_id']/'result.json').is_file() for j in plan['jobs']):
+        raise ContractError('unfinished_expansion_job')
     new=0;counts=Counter();pending=[]
     for job in plan['jobs']:
-        if not (root/'jobs'/job['job_id']/'result.json').exists():
-            if limit is not None and new>=limit:break
-            new+=1
+        folder=root/'jobs'/job['job_id']
+        if (folder/'result.json').exists():
+            result=validate_checkpoint(folder,digest);counts[result['status']]+=1
+            print(json.dumps({'job':result['job_id'],'status':result['status'],'checkpoint_reused':True,'counts':dict(counts)}),flush=True)
+            continue
+        if limit is not None and new>=limit:break
+        new+=1
         pending.append(job)
+    if verify_only:return dict(counts)
     if workers>1:
         # Existing accepted caches are immutable. Prewarm before child processes read them.
         if not (root/'cache-check/result.json').exists():prewarm_market_cache(plan,root)
@@ -271,4 +290,5 @@ def run(output,*,limit=None,workers=1):
 
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--output',required=True);p.add_argument('--limit',type=int);p.add_argument('--workers',type=int,default=1)
-    a=p.parse_args();run(a.output,limit=a.limit,workers=a.workers)
+    p.add_argument('--verify-only',action='store_true',help='Rehash frozen inputs and all completed checkpoints; never execute or replace a partition.')
+    a=p.parse_args();run(a.output,limit=a.limit,workers=a.workers,verify_only=a.verify_only)

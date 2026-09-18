@@ -45,6 +45,26 @@ def open_evidence(root, store, **kwargs):
     return ReadOnlyEvidence(root, store, **kwargs)
 
 
+def evidence_roots(root):
+    """Include original roots behind a virtual index, before creating any output."""
+    root = Path(root).resolve()
+    result = [root]
+    manifest = root / 'cross_archive_index.json'
+    if manifest.is_file():
+        result.extend(Path(p).resolve() for p in json.loads(manifest.read_bytes())['roots'].values())
+    return result
+
+
+def guard_output(output, inputs, reason='output_inside_input'):
+    output = Path(output).resolve()
+    LocalArchive._outside_git(output)
+    for source in inputs:
+        source = Path(source).resolve()
+        LocalArchive._outside_git(source)
+        if source == output or source in output.parents or output in source.parents:
+            raise ContractError(reason)
+
+
 def snapshot_fingerprints(root):
     result = {}
     for path in sorted(root.rglob("*")):

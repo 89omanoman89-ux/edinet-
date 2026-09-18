@@ -14,7 +14,7 @@ from financial_facts import reverse_verify
 from financial_views import fact_view
 from jquants_local import JQuantsArchive, DATASETS
 from local_edinet import LocalArchive
-from metadata_gap_audit import open_evidence, snapshot_fingerprints
+from metadata_gap_audit import open_evidence, snapshot_fingerprints, evidence_roots, guard_output
 from pit_market import (DEFINITION, financial_observations, instant, join_fact,
                         price_observation, reconcile_sources)
 from source_acquisition import PrivateStore, encoded, sha256, utcnow
@@ -54,9 +54,10 @@ def calendar_in_scope(day,submission_days):
 def run(jquants_root, edinet_root, p3_snapshot, private_dir, snapshot, *, synthetic=False, direct_dated=False, row_cache=None,bounded_calendar=False):
     if not re.fullmatch(r"[A-Za-z0-9_-]+", snapshot): raise ContractError("invalid_snapshot_id")
     prior, output = Path(p3_snapshot).resolve(), (Path(private_dir) / snapshot).resolve()
-    for source in (prior, Path(jquants_root).resolve(), Path(edinet_root).resolve()):
-        LocalArchive._outside_git(source)
-        if source == output or source in output.parents: raise ContractError("output_inside_input")
+    inputs = [prior, Path(jquants_root).resolve(), *evidence_roots(edinet_root)]
+    guard_output(output, inputs)
+    if row_cache is not None:
+        guard_output(row_cache, inputs, 'cache_overlaps_source')
     store = PrivateStore(output)
     if any(output.iterdir()): raise ContractError("snapshot_already_exists")
     before = snapshot_fingerprints(prior)

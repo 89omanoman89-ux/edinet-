@@ -11,7 +11,7 @@ from filing_catalog import edinet_metadata
 from financial_facts import definitions, extract_candidates, canonicalize, reverse_verify, timestamp
 from financial_views import reconcile, validate_lineage, fact_view
 from local_edinet import LocalArchive
-from metadata_gap_audit import open_evidence, snapshot_fingerprints
+from metadata_gap_audit import open_evidence, snapshot_fingerprints, evidence_roots, guard_output
 from p2_audit import canonical, CODE_FILES
 from revision_series import inventory_series, revision_graph
 from source_acquisition import PrivateStore, encoded, sha256, utcnow
@@ -83,9 +83,7 @@ def metadata_document(archive, record, recorded_at, sample_kind, cache):
 def run(root, p2_snapshot, private_dir, snapshot, *, synthetic=False, compact_candidates=False):
     if not re.fullmatch(r"[A-Za-z0-9_-]+", snapshot): raise ContractError("invalid_snapshot_id")
     prior, source, output = Path(p2_snapshot).resolve(), Path(root).resolve(), (Path(private_dir) / snapshot).resolve()
-    for path in (prior, source):
-        LocalArchive._outside_git(path)
-        if output == path or path in output.parents: raise ContractError("output_inside_input")
+    guard_output(output, [prior, *evidence_roots(source)])
     before = snapshot_fingerprints(prior)
     selection = json.loads((prior / "selected_documents.json").read_bytes())
     manifest = json.loads((prior / "universe_manifest.json").read_bytes())
