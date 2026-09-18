@@ -217,5 +217,16 @@ class CoverageTests(unittest.TestCase):
         self.assertEqual(file_hash(root/'listings/list_2022-01-31.json'),file_hash(m))
         self.assertTrue((root/'origin_map.json').is_file())
 
+    def test_layout_view_keeps_multistep_revisions_and_all_metadata(self):
+        self.meta.write_bytes(daily([row(1),row(2,docTypeCode='130',parentDocID='S0000001'),
+            row(3,docTypeCode='130',parentDocID='S0000002'),row(4)]))
+        for n in (2,3,4):(self.root/f'documents/S{n:07d}.zip').write_bytes(self.zip.read_bytes())
+        i=self.inventory();d=next(r for r in i.finalize_documents() if r['doc_id']=='S0000001')
+        selected=dict(d,year=2022,status='SELECTED')
+        view=frame_for(selected,{'raw':str(self.root)},self.base/'bounded/frame',frozen_files=i.files)
+        self.assertEqual(sorted(p.stem for p in (view/'documents').glob('*.zip')),['S0000001','S0000002','S0000003'])
+        self.assertEqual(file_hash(view/'listings/2022-01-31/documents.json'),file_hash(self.meta))
+        self.assertTrue((self.root/'documents/S0000004.zip').exists())
+
 
 if __name__ == '__main__': unittest.main()

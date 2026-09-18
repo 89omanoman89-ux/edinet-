@@ -95,19 +95,21 @@ def frame_for(selection, roots, output, *, frozen_files=None):
     root = private_path(roots[artifact['root_id']])
     path = root/artifact['relative_path']
     if file_hash(path) != artifact['byte_sha256']: raise ContractError('frozen_original_changed')
-    # Flat pilot archives are adapted by copying a small, hash-pinned archive into
-    # a NEW private layout. Originals, names, bytes and P3 rules stay unchanged.
-    if frozen_files is not None and not (root/'listings').is_dir():
+    # Copy all frozen daily metadata, but only the primary and its complete
+    # revision closure. This avoids rescanning thousands of unrelated ZIP paths
+    # for every year. The closure is computed by the unchanged P3 implementation.
+    if frozen_files is not None:
         view=Path(output).parent/'archive-view'
         private_path(view)
         view.mkdir(parents=True,exist_ok=False)
-        mappings=[]; translated=[]
-        for f in frozen_files:
-            if f['root_id']!=artifact['root_id']: continue
+        mappings=[]; translated=[];copied=set()
+        available=[f for f in frozen_files if f['root_id']==artifact['root_id']]
+        original_root_id=artifact['root_id'];primary_relative=artifact['relative_path']
+        def copy(f):
             old=f['relative_path']
-            if Path(old).suffix=='.zip': new='documents/'+old
-            elif daily_path(old): new='listings/'+old
-            else: continue
+            if old in copied:return
+            if daily_path(old):new=old if old.startswith('listings/') else 'listings/'+old
+            else:new=old if old.startswith('documents/') else 'documents/'+old
             original=root/old;target=view/new
             if file_hash(original)!=f['byte_sha256']: raise ContractError('frozen_archive_changed')
             target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(original,target)
@@ -115,9 +117,23 @@ def frame_for(selection, roots, output, *, frozen_files=None):
             mappings.append({'original_root_id':f['root_id'],'original_relative_path':old,
                              'view_relative_path':new,'byte_sha256':f['byte_sha256']})
             translated.append(dict(f,relative_path=new))
-            if old==artifact['relative_path']: artifact=dict(artifact,relative_path=new)
+            copied.add(old)
+        for f in available:
+            if daily_path(f['relative_path']) or f['relative_path']==primary_relative:copy(f)
+        from local_edinet import LocalArchive
+        from revision_series import inventory_series
+        archive=LocalArchive(view.resolve(),PrivateStore(Path(output).parent/'layout-check'))
+        _, closure, _=inventory_series(archive,{'challenge':[doc],'probability':[]},
+            {doc:{'doc_id':doc,'zip_files':[],'metadata_events':[]}}, {})
+        for f in available:
+            name=Path(f['relative_path'])
+            identifier=name.name.removesuffix('.manifest.json') if name.name.endswith('.manifest.json') else name.stem
+            if identifier in closure['all'] and (name.suffix=='.zip' or name.name.endswith('.manifest.json')):copy(f)
+        artifact=dict(artifact,relative_path=primary_relative if primary_relative.startswith('documents/') else 'documents/'+primary_relative)
         PrivateStore(view).publish('origin_map.json',encoded({'acquisition_method':'private_layout_copy_of_preexisting_archive',
-            'original_root_id':sha256(str(root).encode()),'mappings':mappings,'originals_read_only':True}))
+            'original_root_id':sha256(str(root).encode()),'root_id':original_root_id,'mappings':mappings,
+            'closure_doc_ids':closure['all'],'closure_rule':'unchanged revision_series.inventory_series',
+            'originals_read_only':True}))
         frozen_files=translated;root=view.resolve()
     store = PrivateStore(output)
     if any(store.root.iterdir()): raise ContractError('frame_already_exists')
