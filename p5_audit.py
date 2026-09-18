@@ -15,6 +15,7 @@ from local_edinet import LocalArchive
 from metadata_gap_audit import ReadOnlyEvidence, snapshot_fingerprints
 from p5_acquisition import json_value
 from source_acquisition import PrivateStore, encoded, sha256
+from source_documentation import acceptance_states, documentation_acceptance
 
 
 def verify_document_metadata(archive,document):
@@ -121,7 +122,10 @@ def run(edinet_root,p3_snapshot,input_dir,private_dir,snapshot,*,synthetic=False
     if not selected or len(selected)>10 or len(set(selected))!=len(selected):raise ContractError('invalid_p5_document_selection')
     code_files={name:sha256((Path(__file__).parent/name).read_text(encoding='utf-8').encode()) for name in
         ('derived_sources.py','p5_audit.py','p5_acquisition.py','p5_collect.py','financial_facts.py','original_tie.py',
-         'dated_pit.py','metadata_gap_audit.py','local_edinet.py','source_acquisition.py')}
+         'dated_pit.py','metadata_gap_audit.py','local_edinet.py','source_acquisition.py',
+         'source_documentation.py','registry/p5_documentation_reviews.json')}
+    review_raw=(Path(__file__).parent/'registry/p5_documentation_reviews.json').read_bytes()
+    review_registry=json.loads(review_raw)
     p3_plan=json.loads((p3/'audit_plan.json').read_bytes())
     common={'snapshot_id':snapshot,'p3_snapshot_id':p3_plan['snapshot_id'],'code_sha':sha256(encoded(code_files)),'definition_version':DEFINITION,
             'synthetic':synthetic,'rights_review':'BLOCKED','export_allowed':False}
@@ -142,8 +146,7 @@ def run(edinet_root,p3_snapshot,input_dir,private_dir,snapshot,*,synthetic=False
         'text_rule':'HTML data extraction then whitespace removal; retain each provider string/hash separately',
         'evidence_group_rule':'same doc_id + original ZIP hash is one upstream group; mirror adds zero independent evidence'})
     verified,failures=verify_source_rows(inputs,bundle,synthetic)
-    for src in bundle['sources'].values():
-        for artifact in src.get('documentation',[]):inputs.read_raw(artifact)
+    save('documentation_review_registry.json',{'registry':review_registry,'registry_byte_sha256':sha256(review_raw)})
     anchors=[verify_document_metadata(archive,d) for d in docs.values()];anchor_by_doc={a['doc_id']:a for a in anchors}
     originals={};canonical_by_locator=defaultdict(list)
     for f in facts:canonical_by_locator[(f['doc_id'],f['xbrl_member'],f['element_index'])].append(f['fact_id'])
@@ -255,18 +258,20 @@ def run(edinet_root,p3_snapshot,input_dir,private_dir,snapshot,*,synthetic=False
         for key in ('submit_date','submit_datetime','submit_date_time','period_start','period_end','period_instant'):
             values=sorted({r[key] for r in provider_rows if isinstance(r.get(key),str) and r[key]})
             dates[key]={'min':values[0],'max':values[-1]} if values else None
-        acceptance.append(dict(src,docs_checked='PASS' if src.get('documentation') else 'BLOCKED',
-            source_class='derived_from_edinet',source_rows_verified=sum(r['source_id']==provider and r['source_row_id'] in verified for r in rows),
-            file_fetched='PASS' if any(r['source_id']==provider and r['source_row_id'] in verified for r in rows) else 'BLOCKED',
+        states=acceptance_states(documentation_acceptance(inputs,provider,src.get('documentation',[]),review_registry),
+            data_fetched='PASS' if any(r['source_id']==provider and r['source_row_id'] in verified for r in rows) else 'BLOCKED',
             schema_profiled='PASS' if any(a['source_id']==provider and a.get('schema') for a in bundle['assets']) else 'BLOCKED',
-            original_fact_tied='PASS' if any(c['status']=='PASS' and c['origin_ids'] for c in subset) else 'BLOCKED',
+            original_tied='PASS' if any(c['status']=='PASS' and c['origin_ids'] for c in subset) else 'BLOCKED')
+        acceptance.append(dict(src,**states,
+            docs_checked=states['documentation_checked'],file_fetched=states['data_fetched'],original_fact_tied=states['original_tied'],
+            source_class='derived_from_edinet',source_rows_verified=sum(r['source_id']==provider and r['source_row_id'] in verified for r in rows),
             acceptance_scope='bounded sample only; not full-source approval',production_approved=False,
             schema_profiles=[{k:v for k,v in a.items() if k not in ('evidence',)} for a in bundle['assets'] if a['source_id']==provider],
             comparison_counts=dict(Counter(c['comparison'] for c in subset)),
             rights_evidence={'queria':'dataset declares JP-FSA-EDINET; independent rights review unresolved',
-                'youseiushida':'GPL repository software license is not a verified dataset redistribution grant',
+                'youseiushida':'AGPL-3.0-or-later repository software license is not a verified dataset redistribution grant',
                 'numad':'dataset card declares Apache-2.0; upstream EDINET rights kept separate'}[provider],
-            upstream_terms_url='https://disclosure2.edinet-fsa.go.jp/',rights_review='BLOCKED',export_allowed=False,
+            upstream_terms_url='https://disclosure2.edinet-fsa.go.jp/',rights_review='BLOCKED',
             provider_replay='NOT ESTABLISHED',independent_primary_evidence=False,
             observed_date_ranges=dates,coverage_basis='selected documents and inspected physical tables; not full source validation',
             identifiers={'doc_id':len({r['doc_id'] for r in provider_rows if r.get('doc_id')}),
