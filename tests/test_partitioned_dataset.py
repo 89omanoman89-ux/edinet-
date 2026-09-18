@@ -198,6 +198,20 @@ class PartitionedDatasetTests(unittest.TestCase):
         self.assertEqual(b['status'],'BLOCKED');self.assertEqual(b['reason'],'artifact_reference_unresolved')
         self.assertEqual(b['input_artifacts'],['missing-file'])
 
+    def test_submission_year_counts_do_not_use_parent_partition_year(self):
+        inv=self.root/'inventory';inv.mkdir();out=self.root/'reports';out.mkdir();idx=self.root/'index';idx.mkdir()
+        docs=[{'doc_id':'parent','originals':[{}],'submit_date':'2016-09-20','document_types':['120']},
+              {'doc_id':'correction','originals':[{}],'submit_date':'2022-01-01','document_types':['130']}]
+        (inv/'document_coverage.jsonl').write_bytes(b''.join(encoded(d)+b'\n' for d in docs))
+        (inv/'expansion_queue.jsonl').write_bytes(b'')
+        (idx/'cross_archive_index.json').write_bytes(encoded({'failures':[]}))
+        states={name:{'source_tied_facts':1,'canonical_eligible_facts':1,'pit_pass':n,'pit_blocked':0}
+                for name,n in [('parent',2),('correction',3)]}
+        result=write_expansion_coverage({'inventory':str(inv),'archive_index':str(idx)},out,states,
+            [{'job_id':'one','month':'2016-09','doc_ids':['parent','correction'],'status':'COMPLETE'}])
+        self.assertEqual(result['year_document_states']['2016']['pit_pass_rows'],2)
+        self.assertEqual(result['year_document_states']['2022']['pit_pass_rows'],3)
+
     def test_exact_stage_file_reconstruction(self):
         # Name the source directories exactly as the snapshot reference specifies.
         import shutil

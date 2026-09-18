@@ -86,6 +86,9 @@ def write_expansion_coverage(plan,out,processed,job_results):
         year=r['submit_date'][:4] if r['submit_date'] else 'unknown'
         years[year]['observed_documents']+=1
         document_gaps.update(r['missing_reasons'])
+        if r['audit']:
+            for key in ('source_tied_facts','canonical_eligible_facts','pit_pass','pit_blocked'):
+                if key in r['audit']:years[year][key+'_rows']+=r['audit'][key]
         for key in ('official_original_available','source_tied','canonical_eligible','pit_eligible'):
             if r[key] is True or r[key]=='PASS':years[year][key]+=1
     def write_gzip(path,records):
@@ -283,7 +286,12 @@ def publish_federation(root,snapshot,*,codec=None,synthetic=False):
         'selection_timestamp':plan['created_at'],
         'snapshot_cutoff_basis':'maximum verified input P3 snapshot cutoff' if source_cutoffs else 'no completed input snapshot',
         'created_at':utcnow(),'code_sha':file_hash(Path(__file__)),'coverage_unique_ids':counts,'table_occurrences':dict(totals),
-        'join_states':dict(states),'year_states':{k:dict(v) for k,v in sorted(years.items())},'complete_partitions':len(shards),
+        'join_states':dict(states),'partition_year_states':{k:dict(v) for k,v in sorted(years.items())},'complete_partitions':len(shards),
+        'partition_year_basis':'earliest scheduling month of each indivisible revision component; may include later correction documents',
+        'document_year_basis':'document submit_date in frozen inventory; unknown dates remain unknown',
+        'cohort_contract':{'primary_membership':'expansion_plan.json jobs[].doc_ids',
+            'revision_support_membership':'each input P3 audit_plan revision_support',
+            'inherited_sample_kind':'P3 compatibility label; actual original P2 selection is separate and unchanged'},
         'failure_reason_occurrences':{stage:dict(sorted(c.items())) for stage,c in sorted(row_failure_counts.items())},
         'blocked_partitions':len(blocked),'blocked_documents':plan['blocked_documents'],
         'rights_status':'BLOCKED','export_allowed':False,'full_market_representativeness':'NOT ESTABLISHED',
