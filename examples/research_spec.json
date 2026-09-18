@@ -1,0 +1,30 @@
+{
+  "schema_version": "0.1",
+  "spec_id": "EXAMPLE-H01-NOT-RUN",
+  "status": "template_not_executed",
+  "question": "Do investment components improve prediction of future operating cash flow?",
+  "purpose": "prediction_not_causal",
+  "snapshot_id": null,
+  "universe_definition": null,
+  "decision_rule": null,
+  "feature_policy": {
+    "representations": ["reported", "derived_with_validated_lineage"],
+    "allow_synthetic": false,
+    "allow_proxy": false,
+    "allow_imputation": false,
+    "pit_mode": "public_reconstruction"
+  },
+  "target_definition": null,
+  "benchmark": "cash_flow_persistence",
+  "evaluation": {
+    "primary_metric": "out_of_time_absolute_error",
+    "split": "calendar_walk_forward_with_label_maturity",
+    "purge_overlap": true,
+    "clusters": ["entity", "calendar_time"],
+    "calibration_fold": null,
+    "untouched_holdout": null,
+    "multiple_testing_family": "investment_composition"
+  },
+  "required_before_run": ["snapshot_id", "universe_definition", "decision_rule", "target_definition", "fit_and_evaluation_periods"],
+  "empirical_results": null
+}

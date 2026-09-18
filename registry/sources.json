@@ -1,0 +1,171 @@
+{
+  "schema_version": "0.1",
+  "review_date": "2026-09-18",
+  "note": "Documentation discovery only. No source is production-approved or bulk-validated by this bootstrap. Rights fields are deliberately unresolved.",
+  "sources": [
+    {
+      "source_id": "edinet_official",
+      "documentation_url": "https://disclosure2.edinet-fsa.go.jp/",
+      "proposed_role": "raw_filings_and_metadata",
+      "upstream_family": "official_origin",
+      "review_state": "official_spec_required",
+      "file_fetched": false,
+      "source_tied": false,
+      "production_approved": false,
+      "redistribution_permission": "unreviewed_do_not_export",
+      "license_evidence_sha256": null,
+      "measured_coverage": null,
+      "limitations": [
+        "API key required for API acquisition",
+        "archive availability varies by document type"
+      ]
+    },
+    {
+      "source_id": "jquants_v2",
+      "documentation_url": "https://jpx-jquants.com/ja/spec/fin-summary",
+      "proposed_role": "market_prices_guidance_financials",
+      "upstream_family": "jpx",
+      "review_state": "documentation_checked",
+      "file_fetched": false,
+      "source_tied": false,
+      "production_approved": false,
+      "redistribution_permission": "unreviewed_do_not_export",
+      "license_evidence_sha256": null,
+      "measured_coverage": null,
+      "limitations": [
+        "contract and endpoint coverage must be checked",
+        "keep acquired/derived data private pending rights review",
+        "Code/DiscDate/DiscTime in current V2 documentation"
+      ]
+    },
+    {
+      "source_id": "queria",
+      "documentation_url": "https://github.com/queria-io/dataset-edinet",
+      "proposed_role": "normalized_financials_and_bridge",
+      "upstream_family": "edinet",
+      "review_state": "documentation_checked",
+      "file_fetched": false,
+      "source_tied": false,
+      "production_approved": false,
+      "redistribution_permission": "unreviewed_do_not_export",
+      "license_evidence_sha256": null,
+      "measured_coverage": null,
+      "limitations": [
+        "annual financial facts; corrections not reflected per documentation",
+        "historical backfill in progress",
+        "five comparative periods are available at filing time, not backdated",
+        "company master is a latest snapshot, not automatically historical"
+      ]
+    },
+    {
+      "source_id": "youseiushida",
+      "documentation_url": "https://github.com/youseiushida/edinet/releases",
+      "proposed_role": "detailed_xbrl_parquet_and_events",
+      "upstream_family": "edinet",
+      "review_state": "release_listing_checked",
+      "file_fetched": false,
+      "source_tied": false,
+      "production_approved": false,
+      "redistribution_permission": "unreviewed_do_not_export",
+      "license_evidence_sha256": null,
+      "measured_coverage": null,
+      "limitations": [
+        "published 2016-2025 securities releases and 2026 through March 20",
+        "event coverage starts at different dates by document type",
+        "release listing is not validation of all files"
+      ]
+    },
+    {
+      "source_id": "cuc",
+      "documentation_url": "https://www3.cuc.ac.jp/~tsuchiya/",
+      "proposed_role": "historical_raw_and_business_text",
+      "upstream_family": "edinet",
+      "review_state": "documentation_checked",
+      "file_fetched": false,
+      "source_tied": false,
+      "production_approved": false,
+      "redistribution_permission": "unreviewed_do_not_export",
+      "license_evidence_sha256": null,
+      "measured_coverage": null,
+      "limitations": [
+        "archive dates and actual inventory must be measured",
+        "raw XBRL needs normalization",
+        "data reuse terms need specific review"
+      ]
+    },
+    {
+      "source_id": "numad",
+      "documentation_url": "https://huggingface.co/datasets/numad/yuho-text-2014-2022/viewer",
+      "proposed_role": "historical_text",
+      "upstream_family": "edinet",
+      "review_state": "viewer_schema_checked",
+      "file_fetched": false,
+      "source_tied": false,
+      "production_approved": false,
+      "redistribution_permission": "unreviewed_do_not_export",
+      "license_evidence_sha256": null,
+      "measured_coverage": null,
+      "limitations": [
+        "viewer shows doc_id/sec_code/edinet_code/periods/submit_date",
+        "submission date may have day-only precision",
+        "full file and license review not performed in this bootstrap"
+      ]
+    },
+    {
+      "source_id": "hiroshi",
+      "documentation_url": "https://github.com/hiroshi0918/edinet_data_pipeline",
+      "proposed_role": "human_capital_with_evidence",
+      "upstream_family": "edinet",
+      "review_state": "documentation_and_release_listing_checked",
+      "file_fetched": false,
+      "source_tied": false,
+      "production_approved": false,
+      "redistribution_permission": "unreviewed_do_not_export",
+      "license_evidence_sha256": null,
+      "measured_coverage": null,
+      "limitations": [
+        "structured/name/regex/optional LLM extraction paths",
+        "scope and worker_type must be preserved",
+        "data-latest is mutable; pin byte hash",
+        "published database has not been downloaded in this bootstrap"
+      ]
+    },
+    {
+      "source_id": "corpus",
+      "documentation_url": "https://en-corpus.com/en/data",
+      "proposed_role": "human_capital_executive_pay_auditors",
+      "upstream_family": "mixed_edinet_and_other_disclosures",
+      "review_state": "documentation_search_result_checked",
+      "file_fetched": false,
+      "source_tied": false,
+      "production_approved": false,
+      "redistribution_permission": "unreviewed_do_not_export",
+      "license_evidence_sha256": null,
+      "measured_coverage": null,
+      "limitations": [
+        "some workstyle fields originate outside EDINET",
+        "scores and lifetime earnings are constructed, not direct measurements",
+        "empty does not mean zero",
+        "direct CSV header and snapshot not inspected"
+      ]
+    },
+    {
+      "source_id": "coarij",
+      "documentation_url": "https://github.com/chakki-works/CoARiJ",
+      "proposed_role": "historical_text_and_filings",
+      "upstream_family": "mixed_edinet_and_other",
+      "review_state": "candidate_not_rechecked",
+      "file_fetched": false,
+      "source_tied": false,
+      "production_approved": false,
+      "redistribution_permission": "unreviewed_do_not_export",
+      "license_evidence_sha256": null,
+      "measured_coverage": null,
+      "limitations": [
+        "financial/price adjuncts are not all EDINET-derived",
+        "avoid double counting overlaps with archives",
+        "requires fresh file/license/coverage audit"
+      ]
+    }
+  ]
+}
