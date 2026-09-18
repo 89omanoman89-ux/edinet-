@@ -4,6 +4,7 @@ from copy import deepcopy
 import io
 import json
 import gzip
+from datetime import datetime,timedelta
 from pathlib import Path
 import unittest
 import zipfile
@@ -64,6 +65,19 @@ class PartitionedDatasetTests(unittest.TestCase):
         self.assertIn('shards',facts['path_base']);self.assertFalse(facts['export_allowed'])
         current=json.loads((self.root/'CURRENT.json').read_bytes())
         self.assertEqual(current['manifest_byte_count'],(self.root/current['manifest']).stat().st_size)
+
+    def test_selection_time_before_audit_does_not_hide_verified_facts(self):
+        from query_dataset import Dataset
+        self.plan['created_at']='2010-01-01T00:00:00+00:00'
+        summary=self.build();d=self.load()
+        source=Dataset(self.job/'package',codec=self.f.codec,allow_synthetic=True)
+        self.assertEqual(summary['snapshot_cutoff'],source.index['snapshot_cutoff'])
+        self.assertEqual(summary['selection_timestamp'],self.plan['created_at'])
+        at=(datetime.fromisoformat(self.f.fact['public_available_at'])+timedelta(seconds=1)).isoformat()
+        entity='edinet:'+self.f.fact['edinet_code']
+        expected=source.facts(entity,at)
+        self.assertTrue(expected['facts'])
+        self.assertEqual(d.query('facts',entity=entity,as_of=at),expected)
 
     def test_pointer_snapshot_and_manifest_byte_count_are_checked(self):
         self.build();path=self.root/'CURRENT.json';current=json.loads(path.read_bytes())

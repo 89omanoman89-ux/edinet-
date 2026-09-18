@@ -64,6 +64,9 @@ cacheは選択を高速化するだけであり、利用するたび元ファイ
 主体のas-of queryは、その主体の全partitionを集めて既存`fact_view`を実行する。
 ジョブ境界を利用可能時点や訂正系列の境界と解釈しない。
 同一market/provider rowの複数partitionへの出現数とunique ID数は別集計にする。
+選択計画の作成時刻は`selection_timestamp`として分離する。queryのsnapshot cutoffは
+検証済み入力P3 snapshotのcutoffの最大値とし、各partitionのcutoffもmanifestに残す。
+原本の公開時刻やfactの利用可能時刻は変えず、as-of判定には既存`fact_view`を使う。
 
 物理Parquetの`private_payload_codec=column_projection_v1`は、同一文字列が
 query列とpayloadに重複するとき、payload内の参照先列を保存する可逆圧縮である。

@@ -211,7 +211,7 @@ def publish_federation(root,snapshot,*,codec=None,synthetic=False):
         CREATE TABLE shared_locations (kind INTEGER,id BLOB,shard INTEGER,PRIMARY KEY(kind,id,shard)) WITHOUT ROWID;
         CREATE TABLE documents (id TEXT PRIMARY KEY,entity TEXT,shard INTEGER);
     ''')
-    shards=[];entities={};totals=Counter();states=Counter();years=defaultdict(Counter);blocked=[];processed={};job_results=[]
+    shards=[];entities={};totals=Counter();states=Counter();years=defaultdict(Counter);blocked=[];processed={};job_results=[];source_cutoffs=[]
     # WITHOUT ROWID enforces IDs without duplicating a multi-million-row index.
     for job in plan['jobs']:
         folder=root/'jobs'/job['job_id']
@@ -223,6 +223,8 @@ def publish_federation(root,snapshot,*,codec=None,synthetic=False):
             blocked.append({'job_id':job['job_id'],'doc_ids':job['doc_ids'],'month':job['month'],'reason':result['reason']});continue
         if not synthetic and not (folder/'evidence_manifest.json').is_file():raise ContractError('stage_evidence_manifest_missing')
         package=folder/'package';data=Dataset(package,codec=codec,allow_synthetic=synthetic)
+        source_cutoff=datetime.fromisoformat(data.index['snapshot_cutoff']);aware(source_cutoff)
+        source_cutoffs.append(source_cutoff)
         number=len(shards)
         entry={'number':number,'job_id':job['job_id'],'package':package.relative_to(root).as_posix(),
             'CURRENT_sha256':file_hash(package/'CURRENT.json'),'manifest_sha256':file_hash(data.path/'manifest.json'),
@@ -230,7 +232,8 @@ def publish_federation(root,snapshot,*,codec=None,synthetic=False):
             'evidence_sha256':result['artifacts']['evidence.zip'],'checkpoint':(folder/'result.json').relative_to(root).as_posix(),
             'evidence_manifest':(folder/'evidence_manifest.json').relative_to(root).as_posix() if (folder/'evidence_manifest.json').exists() else None,
             'evidence_manifest_sha256':file_hash(folder/'evidence_manifest.json') if (folder/'evidence_manifest.json').exists() else None,
-            'checkpoint_sha256':file_hash(folder/'result.json'),'validation':data.verification,'coverage':data.index['coverage']}
+            'checkpoint_sha256':file_hash(folder/'result.json'),'validation':data.verification,'coverage':data.index['coverage'],
+            'snapshot_cutoff':data.index['snapshot_cutoff']}
         shards.append(entry)
         for name,rows in data.tables.items():
             totals[name]+=len(rows)
@@ -253,7 +256,7 @@ def publish_federation(root,snapshot,*,codec=None,synthetic=False):
         for f in data.rows('canonical_facts'):
             if f.get('normalized_value') is not None and f.get('verification_state')=='source_tied':processed[f['doc_id']]['source_tied_facts']+=1
         view=fact_view(data.rows('canonical_facts'),data.rows('documents'),mode='latest_restated',
-            snapshot_cutoff=datetime.fromisoformat(plan['created_at']),allow_synthetic_for_tests=synthetic)
+            snapshot_cutoff=source_cutoff,allow_synthetic_for_tests=synthetic)
         for f in view['facts']:processed[f['doc_id']]['canonical_eligible_facts']+=1
         for r in data.rows('pit_join_rows'):processed[r['doc_id']]['pit_pass' if r['status']=='PASS' else 'pit_blocked']+=1
         for r in data.rows('pit_join_rows'):states[r['status']]+=1;years[year]['PIT_'+r['status']]+=1
@@ -265,7 +268,10 @@ def publish_federation(root,snapshot,*,codec=None,synthetic=False):
     counts['entities']=len(entities)
     db.commit();db.close()
     expansion=write_expansion_coverage(plan,out,processed,job_results) if not synthetic else {}
-    summary={'snapshot_id':snapshot,'snapshot_cutoff':plan['created_at'],'contract_version':VERSION,
+    cutoff=max(source_cutoffs).isoformat() if source_cutoffs else plan['created_at']
+    summary={'snapshot_id':snapshot,'snapshot_cutoff':cutoff,'contract_version':VERSION,
+        'selection_timestamp':plan['created_at'],
+        'snapshot_cutoff_basis':'maximum verified input P3 snapshot cutoff' if source_cutoffs else 'no completed input snapshot',
         'created_at':utcnow(),'code_sha':file_hash(Path(__file__)),'coverage_unique_ids':counts,'table_occurrences':dict(totals),
         'join_states':dict(states),'year_states':{k:dict(v) for k,v in sorted(years.items())},'complete_partitions':len(shards),
         'blocked_partitions':len(blocked),'blocked_documents':plan['blocked_documents'],
@@ -280,7 +286,7 @@ def publish_federation(root,snapshot,*,codec=None,synthetic=False):
     if not synthetic:store.publish('source_catalog.json',encoded(source_catalog(plan)))
     # Chat views are existing shard CSVs, plus the global entity and filing indices in SQLite.
     manifest={'snapshot_id':snapshot,'contract_version':VERSION,'synthetic':synthetic,'shards':shards,
-        'snapshot_cutoff':plan['created_at'],'plan_sha256':digest,'tables':list(TABLES),'rights_status':'BLOCKED','export_allowed':False,
+        'snapshot_cutoff':cutoff,'selection_timestamp':plan['created_at'],'plan_sha256':digest,'tables':list(TABLES),'rights_status':'BLOCKED','export_allowed':False,
         'artifacts':{p.relative_to(root).as_posix():{'sha256':file_hash(p),'byte_count':p.stat().st_size} for p in out.iterdir() if p.is_file()}}
     store.publish('manifest.json',encoded(manifest))
     tables=catalog()
