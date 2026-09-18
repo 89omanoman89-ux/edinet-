@@ -4,8 +4,9 @@ from collections import Counter
 from contextlib import redirect_stdout
 import json
 from pathlib import Path
+import shutil
 
-from coverage_inventory import file_hash, private_path
+from coverage_inventory import daily_path, file_hash, private_path
 from evidence_core import ContractError
 from source_acquisition import PrivateStore, encoded, sha256, utcnow
 
@@ -87,14 +88,37 @@ def frame_for(selection, roots, output, *, frozen_files=None):
     """Choose archive by frozen daily-file count, never extraction results."""
     doc = selection['doc_id']
     frozen_files = list(frozen_files) if frozen_files is not None else None
-    counts = Counter(f['root_id'] for f in (frozen_files or []) if f['relative_path'].startswith('listings/') and
-                     f['relative_path'].endswith('/documents.json'))
+    counts = Counter(f['root_id'] for f in (frozen_files or []) if daily_path(f['relative_path']))
     candidates = sorted(selection['originals'], key=lambda a: (-counts[a['root_id']], a['root_id'], a['relative_path']))
     if not candidates: raise ContractError('original_not_available')
     artifact = candidates[0]
     root = private_path(roots[artifact['root_id']])
     path = root/artifact['relative_path']
     if file_hash(path) != artifact['byte_sha256']: raise ContractError('frozen_original_changed')
+    # Flat pilot archives are adapted by copying a small, hash-pinned archive into
+    # a NEW private layout. Originals, names, bytes and P3 rules stay unchanged.
+    if frozen_files is not None and not (root/'listings').is_dir():
+        view=Path(output).parent/'archive-view'
+        private_path(view)
+        view.mkdir(parents=True,exist_ok=False)
+        mappings=[]; translated=[]
+        for f in frozen_files:
+            if f['root_id']!=artifact['root_id']: continue
+            old=f['relative_path']
+            if Path(old).suffix=='.zip': new='documents/'+old
+            elif daily_path(old): new='listings/'+old
+            else: continue
+            original=root/old;target=view/new
+            if file_hash(original)!=f['byte_sha256']: raise ContractError('frozen_archive_changed')
+            target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(original,target)
+            if file_hash(target)!=f['byte_sha256']: raise ContractError('archive_view_copy_mismatch')
+            mappings.append({'original_root_id':f['root_id'],'original_relative_path':old,
+                             'view_relative_path':new,'byte_sha256':f['byte_sha256']})
+            translated.append(dict(f,relative_path=new))
+            if old==artifact['relative_path']: artifact=dict(artifact,relative_path=new)
+        PrivateStore(view).publish('origin_map.json',encoded({'acquisition_method':'private_layout_copy_of_preexisting_archive',
+            'original_root_id':sha256(str(root).encode()),'mappings':mappings,'originals_read_only':True}))
+        frozen_files=translated;root=view.resolve()
     store = PrivateStore(output)
     if any(store.root.iterdir()): raise ContractError('frame_already_exists')
     # P3 independently rebuilds all local revision metadata and verifies bytes.
@@ -106,7 +130,7 @@ def frame_for(selection, roots, output, *, frozen_files=None):
         for f in frozen_files:
             if f['root_id'] != artifact['root_id']: continue
             relative=f['relative_path']
-            if relative.startswith('documents/') and relative.endswith('.zip'):
+            if relative.endswith('.zip'):
                 original_paths.add(relative)
                 identifier=Path(relative).stem
                 if identifier==doc and relative==artifact['relative_path']: continue
@@ -115,11 +139,11 @@ def frame_for(selection, roots, output, *, frozen_files=None):
                 if identifier in audits and audits[identifier]!=f['byte_sha256']:
                     raise ContractError('frozen_original_bytes_ambiguous')
                 audits[identifier]=f['byte_sha256']
-            elif relative.startswith('listings/') and relative.endswith('/documents.json'):
+            elif daily_path(relative):
                 listing_paths.add(relative)
                 listings.append({k:f[k] for k in ('relative_path','byte_sha256')})
-        current_zips={p.relative_to(root).as_posix() for p in (root/'documents').rglob('*.zip')}
-        current_lists={p.relative_to(root).as_posix() for p in (root/'listings').rglob('documents.json')}
+        current_zips={p.relative_to(root).as_posix() for p in root.rglob('*.zip')}
+        current_lists={p.relative_to(root).as_posix() for p in root.rglob('*.json') if daily_path(p.relative_to(root).as_posix())}
         if original_paths!=current_zips or listing_paths!=current_lists:
             raise ContractError('frozen_archive_file_set_changed')
     store.publish('selected_documents.json', encoded({'challenge': [doc], 'probability': []}))
@@ -172,7 +196,9 @@ def subset_bundle(source, p3, selected, output):
                     unavailable.append({'source_id':a['source_id'],'table':a['table'],'row_group':group,
                                         'reason':'recorded_range_missing','asset_id':a['asset_id']})
                     continue
-                for n, r in enumerate(records): keep(json_value(r), {'row_group':group,'row_index':n})
+                for n, r in enumerate(records):
+                    if r.get('doc_id') in selected or (a['table']=='mart_companies' and r.get('edinet_code') in codes):
+                        keep(json_value(r), {'row_group':group,'row_index':n})
         if matched:
             assets.append(a); selected_rows.extend(matched)
     bundle = dict(original, rows=selected_rows, assets=assets, selection={

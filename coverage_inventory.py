@@ -51,6 +51,13 @@ def day(value):
         return None
 
 
+def daily_path(relative):
+    p=Path(relative)
+    return (p.suffix=='.json' and not p.name.endswith('.manifest.json')
+            and not any(x.startswith('.') for x in p.parts)
+            and (p.parts[0]=='listings' or re.fullmatch(r'list_\d{4}-\d{2}-\d{2}\.json',p.name) is not None))
+
+
 def freeze_selection(documents, years=YEARS, seed=SEED):
     """Use metadata and raw existence only; never inspect downstream outcomes."""
     result = []
@@ -97,6 +104,7 @@ class Inventory:
         self.docs = {}
         self.gaps = []
         self.logical_seen = set()
+        self.prior_acceptance = defaultdict(Counter)
         self.save('inventory_plan.json', dict(plan=plan, code_files=code, seed=SEED,
             years=list(YEARS), scope='only explicit roots; no remote or Drive discovery',
             row_count_policy='physical decoded records, byte-identical files deduplicated within source/table; snapshots separate'))
@@ -189,7 +197,7 @@ class Inventory:
         for f in [x for x in self.files if x['root_id'] == root_id]:
             relative = f['relative_path']
             path = self.roots[root_id]/relative
-            if relative.startswith('documents/') and path.suffix.lower() == '.zip':
+            if path.suffix.lower() == '.zip':
                 f['attributed_sources'] = ['edinet_original']
                 doc = path.stem
                 if not re.fullmatch(r'S[0-9A-Z]{7}', doc):
@@ -198,7 +206,7 @@ class Inventory:
                 self.document(doc)['originals'].append({k: f[k] for k in
                     ('root_id', 'relative_path', 'file_id', 'byte_sha256', 'byte_count', 'mtime_ns')})
                 self.document(doc)['sources'].add('edinet_original')
-            elif relative.startswith('listings/') and path.name == 'documents.json':
+            elif daily_path(relative):
                 f['attributed_sources'] = ['edinet_metadata']
                 try:
                     raw = path.read_bytes(); obj = json.loads(raw)
@@ -313,6 +321,13 @@ class Inventory:
         eligible_ids = set()
         if accepted and (root/accepted/'view_audit.json').is_file():
             eligible_ids = set(json.loads((root/accepted/'view_audit.json').read_bytes())['latest_restated_fact_ids'])
+        accepted_originals = {}
+        if accepted and (root/accepted/'original_artifacts.jsonl').is_file():
+            with (root/accepted/'original_artifacts.jsonl').open(encoding='utf-8') as stream:
+                for r in map(json.loads,stream):
+                    digest=r['artifact']['byte_sha256']
+                    if digest in {a['byte_sha256'] for a in self.docs.get(r['doc_id'],{}).get('originals',[])}:
+                        accepted_originals[r['doc_id']]=digest
         for f in [x for x in self.files if x['root_id'] == rid]:
             path = root/f['relative_path']
             if path.suffix == '.jsonl':
@@ -326,6 +341,9 @@ class Inventory:
                                 self.row(source, path.stem, f, axis='unknown')
                                 continue
                             doc = r.get('doc_id'); when = r.get('public_available_at') or r.get('submit_datetime') or r.get('decision_at')
+                            if (path.relative_to(root).parts[0]==accepted and path.name=='comparison_ledger.jsonl'
+                                    and r.get('status')=='PASS' and r.get('origin_ids') and doc in accepted_originals):
+                                self.prior_acceptance[r['source_id']]['source_tied_comparison_rows'] += 1
                             tied = (r.get('verification_state') == 'source_tied' and
                                     r.get('source_artifact_sha256') in {a['byte_sha256'] for a in self.docs.get(doc,{}).get('originals',[])})
                             canonical = path.name == 'canonical_facts.jsonl' and tied and r.get('fact_id') in eligible_ids
@@ -422,6 +440,8 @@ class Inventory:
         for p in queue:
             if p['status'] in ('BLOCKED', 'UNKNOWN'):
                 self.gap(p['reason'], partition_id=p['partition_id'], source=p['source'], month=p['month'], table=p['table'])
+        for source in ('edinet_original','jquants','queria','youseiushida','numad'):
+            self.gap('rights_unresolved',source=source)
         self.lines('gap_ledger.jsonl', self.gaps)
         sources = sorted({s for d in docs for s in d['sources']})
         doc_sets = {s: {d['doc_id'] for d in docs if s in d['sources']} for s in sources}
@@ -454,6 +474,11 @@ class Inventory:
                 'research_ready': 'BLOCKED', 'rights_review': 'BLOCKED'}
             summary[s]['source_class'] = ('derived_from_edinet' if s in ('queria','youseiushida','numad') else
                 'official_original' if s=='edinet_original' else 'independent_external' if s=='jquants' else 'inventory_or_existing_snapshot')
+            prior=dict(self.prior_acceptance.get(s,{}))
+            summary[s]['prior_snapshot_acceptance']=prior
+            if prior.get('source_tied_comparison_rows'):
+                summary[s]['source_tied']='PASS'
+                summary[s]['acceptance_scope']='only fixed prior P5 comparison rows with still-present original SHA; new decoded rows unaccepted'
         self.save('coverage_summary.json', {'sources': summary, 'partition_states': dict(Counter(p['status'] for p in queue)),
             'gap_reasons': dict(Counter(g['reason'] for g in self.gaps)), 'document_ids': len(docs),
             'full_10_year_expansion': 'NOT RUN', 'full_market_representativeness': 'NOT ESTABLISHED',

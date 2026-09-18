@@ -185,5 +185,37 @@ class CoverageTests(unittest.TestCase):
         self.assertEqual(r['reason'],'synthetic_revision_branch');self.assertEqual(r['doc_id'],s['doc_id'])
         p4.assert_not_called()
 
+    def test_prior_source_tie_requires_matching_current_original_hash(self):
+        root=self.base/'p5'; accepted=root/'accepted';accepted.mkdir(parents=True)
+        artifact=accepted/'original_artifacts.jsonl'
+        artifact.write_bytes(encoded({'doc_id':'S0000001','artifact':{'byte_sha256':file_hash(self.zip)}})+b'\n')
+        (accepted/'comparison_ledger.jsonl').write_bytes(encoded({'doc_id':'S0000001','source_id':'queria',
+            'status':'PASS','origin_ids':['synthetic-original'],'public_available_at':'2022-01-31T15:00:00+09:00'})+b'\n')
+        spec={'id':'p5','source':'p5','kind':'snapshots','path':str(root),'accepted_snapshot':'accepted'}
+        self.plan['roots'].append(spec); i=self.inventory();i.snapshots(spec)
+        self.assertEqual(i.prior_acceptance['queria']['source_tied_comparison_rows'],1)
+        i.prior_acceptance.clear();self.zip.write_bytes(b'changed')
+        i.docs['S0000001']['originals'][0]['byte_sha256']=file_hash(self.zip)
+        i.snapshots(spec)
+        self.assertEqual(i.prior_acceptance['queria']['source_tied_comparison_rows'],0)
+
+    def test_dated_daily_filename_recognized_and_manifest_excluded(self):
+        self.meta.rename(self.meta.with_name('list_2022-01-31.json'))
+        self.meta.with_name('list_2022-01-31.manifest.json').write_bytes(b'{}')
+        i=self.inventory();d=i.finalize_documents()[0]
+        self.assertEqual(d['submit_date'],'2022-01-31');self.assertFalse(i.gaps)
+
+    def test_flat_archive_layout_copy_preserves_original_bytes(self):
+        flat=self.base/'flat';flat.mkdir()
+        z=flat/'S0000001.zip';z.write_bytes(self.zip.read_bytes())
+        m=flat/'list_2022-01-31.json';m.write_bytes(self.meta.read_bytes())
+        self.spec['path']=str(flat);i=self.inventory();before={p.name:file_hash(p) for p in flat.iterdir()}
+        selected=next(r for r in freeze_selection(i.finalize_documents()) if r['status']=='SELECTED')
+        root=frame_for(selected,{'raw':str(flat)},self.base/'new/frame',frozen_files=i.files)
+        self.assertEqual(before,{p.name:file_hash(p) for p in flat.iterdir()})
+        self.assertEqual(file_hash(root/'documents/S0000001.zip'),file_hash(z))
+        self.assertEqual(file_hash(root/'listings/list_2022-01-31.json'),file_hash(m))
+        self.assertTrue((root/'origin_map.json').is_file())
+
 
 if __name__ == '__main__': unittest.main()
