@@ -93,16 +93,43 @@ def pack(payload, reference=None):
 def payload(row): return json.loads(row['payload_json'])
 
 
+def compact_payload(row):
+    """Lossless physical encoding; logical schema and stable IDs do not change."""
+    original=payload(row);projected=[];rest=dict(original)
+    for key,value in original.items():
+        if key!='payload_json' and isinstance(value,str) and key in COLUMNS and row[key]==value:
+            projected.append(key);rest.pop(key)
+    return dict(row,payload_json=encoded({'payload':rest,'projected_columns':projected}).decode())
+
+
+def expand_payload(row):
+    wrapper=payload(row)
+    if set(wrapper)!={'payload','projected_columns'}:raise ContractError('payload_projection_schema')
+    result=dict(wrapper['payload']);keys=wrapper['projected_columns']
+    if len(keys)!=len(set(keys)):raise ContractError('payload_projection_duplicate')
+    for key in keys:
+        if key=='payload_json' or key not in COLUMNS or key in result or not isinstance(row[key],str):
+            raise ContractError('payload_projection_invalid')
+        result[key]=row[key]
+    return dict(row,payload_json=encoded(result).decode())
+
+
 class ParquetCodec:
     format = 'parquet'
     extension = '.parquet'
+
+    def __init__(self,compression_level=3,compact=False):
+        self.compression_level=compression_level;self.compact=compact
 
     def encode(self, rows):
         import pyarrow as pa
         import pyarrow.parquet as pq
         schema = pa.schema([pa.field(k, pa.string()) for k in COLUMNS])
+        if self.compact:
+            schema=schema.with_metadata({b'private_payload_codec':b'column_projection_v1'})
+            rows=[compact_payload(r) for r in rows]
         sink = pa.BufferOutputStream()
-        pq.write_table(pa.Table.from_pylist(rows, schema=schema), sink, compression='zstd')
+        pq.write_table(pa.Table.from_pylist(rows, schema=schema), sink, compression='zstd',compression_level=self.compression_level)
         return sink.getvalue().to_pybytes()
 
     def decode(self, raw):
@@ -111,4 +138,7 @@ class ParquetCodec:
         table = pq.read_table(pa.BufferReader(raw))
         observed = [[f.name, str(f.type), f.nullable] for f in table.schema]
         if observed != SCHEMA: raise ContractError('parquet_schema_mismatch')
-        return table.to_pylist()
+        rows=table.to_pylist();codec=(table.schema.metadata or {}).get(b'private_payload_codec')
+        if codec==b'column_projection_v1':return [expand_payload(r) for r in rows]
+        if codec is not None:raise ContractError('unknown_payload_codec')
+        return rows

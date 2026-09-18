@@ -49,6 +49,7 @@ def build_tables(roots, fingerprints, plans):
     docs = {r['doc_id']: r for r, _ in source('p3','documents.jsonl')}
     entities = {}
     for doc in docs.values():
+        if not doc.get('edinet_code'): continue
         code = doc['edinet_code']; eid = 'edinet:' + code
         entity = entities.setdefault(eid, {'entity_id': eid, 'edinet_code': code,
             'names': [], 'codes': [], 'document_ids': [], 'name_evidence': [], 'names_are_join_keys': False})
@@ -110,7 +111,7 @@ def build_tables(roots, fingerprints, plans):
     def edge(table, identifier, target, target_id, relation):
         if target_id is not None: edges.add((table, identifier, target, target_id, relation))
     for d in docs.values():
-        edge('documents',d['doc_id'],'entities','edinet:'+d['edinet_code'],'filer')
+        if d.get('edinet_code'): edge('documents',d['doc_id'],'entities','edinet:'+d['edinet_code'],'filer')
         if d.get('parentDocID') in docs: edge('documents',d['doc_id'],'documents',d['parentDocID'],'revises')
     for r in tables['canonical_facts']:
         f = payload(r); fid = f['fact_id']
@@ -148,7 +149,7 @@ def chat_views(tables, snapshot, cutoff, synthetic):
         views['company_index'].append(dict(snapshot_id=snapshot,entity_id=e['entity_id'],edinet_code=e['edinet_code'],
             names_json=json.dumps(e['names'],ensure_ascii=False),codes_json=json.dumps(e['codes']),search_only='true'))
     for d in values('documents'):
-        views['filing_index'].append(dict(snapshot_id=snapshot,doc_id=d['doc_id'],entity_id='edinet:'+d['edinet_code'],sec_code=d.get('secCode'),
+        views['filing_index'].append(dict(snapshot_id=snapshot,doc_id=d['doc_id'],entity_id='edinet:'+d['edinet_code'] if d.get('edinet_code') else None,sec_code=d.get('secCode'),
             parent_doc_id=d.get('parentDocID'),public_available_at=d.get('public_available_at'),sample_kind=d.get('sample_kind'),
             status='BLOCKED' if d.get('document_failure') else 'CANDIDATE',missing_reason=d.get('document_failure')))
     view = fact_view(values('canonical_facts'),values('documents'), mode='latest_restated',

@@ -1,5 +1,10 @@
 # Private dataset usage / P5.5
 
+全量を分割した新しいprivate packageは[PRIVATE_EXPANSION.md](PRIVATE_EXPANSION.md)も参照する。
+`private-partitioned-query-v1`のrootは同じCLIが自動判別し、主体の全partitionを集めてPITを評価する。
+物理Parquetがcolumn projection codecを宣言する場合、`ParquetCodec.decode`でpayloadを復元する。
+private sourceの取得権限やrightsが、この形式の採用によって増えることはない。
+
 公開Gitはコードと利用契約を提供し、個票は私有packageに置く。通常チャットまたはagentは、
 以下の順序と既存IDを使って問い合わせる。GitHubを読めることは、私有DriveやParquetへのアクセス権を意味しない。
 必要ファイルを読めない場合はその段階をBLOCKEDとし、数値を推測しない。

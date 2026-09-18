@@ -11,7 +11,7 @@ from filing_catalog import edinet_metadata
 from financial_facts import definitions, extract_candidates, canonicalize, reverse_verify, timestamp
 from financial_views import reconcile, validate_lineage, fact_view
 from local_edinet import LocalArchive
-from metadata_gap_audit import ReadOnlyEvidence, snapshot_fingerprints
+from metadata_gap_audit import open_evidence, snapshot_fingerprints, evidence_roots, guard_output
 from p2_audit import canonical, CODE_FILES
 from revision_series import inventory_series, revision_graph
 from source_acquisition import PrivateStore, encoded, sha256, utcnow
@@ -80,12 +80,10 @@ def metadata_document(archive, record, recorded_at, sample_kind, cache):
         "rights_review": "BLOCKED", "export_allowed": False}
 
 
-def run(root, p2_snapshot, private_dir, snapshot, *, synthetic=False):
+def run(root, p2_snapshot, private_dir, snapshot, *, synthetic=False, compact_candidates=False):
     if not re.fullmatch(r"[A-Za-z0-9_-]+", snapshot): raise ContractError("invalid_snapshot_id")
     prior, source, output = Path(p2_snapshot).resolve(), Path(root).resolve(), (Path(private_dir) / snapshot).resolve()
-    for path in (prior, source):
-        LocalArchive._outside_git(path)
-        if output == path or path in output.parents: raise ContractError("output_inside_input")
+    guard_output(output, [prior, *evidence_roots(source)])
     before = snapshot_fingerprints(prior)
     selection = json.loads((prior / "selected_documents.json").read_bytes())
     manifest = json.loads((prior / "universe_manifest.json").read_bytes())
@@ -95,11 +93,11 @@ def run(root, p2_snapshot, private_dir, snapshot, *, synthetic=False):
         frame[r["doc_id"]] = r
     store = PrivateStore(output)
     if any(output.iterdir()): raise ContractError("snapshot_already_exists")
-    archive = ReadOnlyEvidence(root, store, provenance_class="synthetic_fixture" if synthetic else "preexisting_local_official_archive")
+    archive = open_evidence(root, store, provenance_class="synthetic_fixture" if synthetic else "preexisting_local_official_archive")
     if archive.root_id != manifest["archive_root_id"]: raise ContractError("archive_root_mismatch")
     config = definitions()
     code = {n: sha256((Path(__file__).parent / n).read_text(encoding="utf-8").encode()) for n in
-            (*CODE_FILES, "metadata_gap_audit.py", "financial_facts.py", "financial_views.py", "revision_series.py", "p3_audit.py", "registry/financial_definitions_v1.json")}
+            (*CODE_FILES, "metadata_gap_audit.py", "financial_facts.py", "financial_views.py", "revision_series.py", "p3_audit.py", "registry/financial_definitions_v1.json", "registry/financial_extensions_v2.json", "expansion_archive.py")}
     common = {"snapshot_id": snapshot, "code_sha": sha256(encoded(code)), "p2_snapshot_id": manifest["snapshot_id"],
               "definition_version": config["definition_version"], "synthetic": synthetic, "export_allowed": False}
     def save(name, obj): store.publish(name, encoded(dict(common, **obj)) + b"\n")
@@ -107,7 +105,8 @@ def run(root, p2_snapshot, private_dir, snapshot, *, synthetic=False):
     now = utcnow()
     inventory, plan, frame = inventory_series(archive, selection, frame, manifest)
     save("revision_inventory.json", inventory)
-    save("audit_plan.json", dict(plan, created_at=now, code_files=code, p2_fingerprints=before))
+    save("audit_plan.json", dict(plan, created_at=now, code_files=code, p2_fingerprints=before,
+         candidate_storage='locator_projection' if compact_candidates else 'full',canonical_storage='lossless'))
     save("canonical_fact_definitions.json", {"definitions": config})
     documents, all_candidates, all_facts, failures, checks, coverage = [], [], [], [], [], []
     failures.extend(dict(f, stage="revision_inventory") for f in inventory["failures"])
@@ -126,7 +125,8 @@ def run(root, p2_snapshot, private_dir, snapshot, *, synthetic=False):
             if not paths: raise ContractError("revision_raw_missing" if kind == "revision_support" or d["doc_type"] == "130" else "raw_missing")
             if len(paths) != 1: raise ContractError("raw_missing_or_ambiguous")
             frozen = paths[0]
-            if not (archive.root / frozen["relative_path"]).is_file():
+            exists = archive.file_exists(frozen["relative_path"]) if hasattr(archive, 'file_exists') else (archive.root / frozen["relative_path"]).is_file()
+            if not exists:
                 raise ContractError("revision_raw_missing" if kind == "revision_support" or d["doc_type"] == "130" else "raw_missing")
             artifact = archive.observe(frozen["relative_path"], doc_id=doc)
             if (artifact["source_mtime_ns"], artifact["byte_count"]) != (frozen["mtime_ns"], frozen["byte_count"]):
@@ -174,7 +174,11 @@ def run(root, p2_snapshot, private_dir, snapshot, *, synthetic=False):
             transitions.append({"revision_doc_id": d["doc_id"], "boundary": label, "decision_at": decision.isoformat(),
                 "fact_ids": [f["fact_id"] for f in v["facts"]], "blocked": v["blocked"]})
     lines("documents.jsonl", documents)
-    lines("xbrl_fact_candidates.jsonl", all_candidates)
+    # All canonical facts and all failures remain lossless. Optional noncanonical
+    # candidate projection keeps locators, not repeated raw numeric/text bodies.
+    candidate_fields=('candidate_id','doc_id','source_artifact_sha256','xbrl_member',
+        'xbrl_member_sha256','element_index','original_qname','contextRef','unitRef','rule_id','missing_reason')
+    lines("xbrl_fact_candidates.jsonl", [{k:c.get(k) for k in candidate_fields} for c in all_candidates] if compact_candidates else all_candidates)
     lines("canonical_facts.jsonl", all_facts)
     lines("reconciliation.jsonl", reconciliation)
     lines("lineage.jsonl", [{"fact_id": f["fact_id"], "input_ids": f["input_ids"], "candidate_id": f["candidate_id"],

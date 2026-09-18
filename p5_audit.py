@@ -12,7 +12,7 @@ from evidence_core import ContractError
 from financial_facts import reverse_verify
 from filing_catalog import edinet_metadata
 from local_edinet import LocalArchive
-from metadata_gap_audit import ReadOnlyEvidence, snapshot_fingerprints
+from metadata_gap_audit import open_evidence, snapshot_fingerprints, evidence_roots, guard_output
 from p5_acquisition import json_value
 from source_acquisition import PrivateStore, encoded, sha256
 from source_documentation import acceptance_states, documentation_acceptance
@@ -108,18 +108,18 @@ def verify_source_rows(store,bundle,synthetic=False):
     return verified,failures
 
 
-def run(edinet_root,p3_snapshot,input_dir,private_dir,snapshot,*,synthetic=False):
+def run(edinet_root,p3_snapshot,input_dir,private_dir,snapshot,*,synthetic=False,compact_originals=False,document_limit=10,raw_store=None):
     if not re.fullmatch(r'[A-Za-z0-9_-]+',snapshot):raise ContractError('invalid_snapshot_id')
     p3,source=Path(p3_snapshot).resolve(),Path(input_dir).resolve();output=(Path(private_dir)/snapshot).resolve()
-    for path in (p3,source,Path(edinet_root).resolve()):
-        LocalArchive._outside_git(path)
-        if path==output or path in output.parents:raise ContractError('output_inside_input')
+    guard_output(output, [p3, source, Path(raw_store or source).resolve(), *evidence_roots(edinet_root)])
     store=PrivateStore(output)
     if any(output.iterdir()):raise ContractError('snapshot_already_exists')
     before=snapshot_fingerprints(p3);source_before=snapshot_fingerprints(source)
-    bundle=json.loads((source/'bundle.json').read_bytes());inputs=PrivateStore(source)
+    bundle=json.loads((source/'bundle.json').read_bytes());inputs=PrivateStore(raw_store or source)
+    # A shared store is read-only; each requested artifact is still byte-verified.
+    if raw_store is not None:LocalArchive._outside_git(Path(raw_store).resolve())
     selected=bundle['selection']['doc_ids']
-    if not selected or len(selected)>10 or len(set(selected))!=len(selected):raise ContractError('invalid_p5_document_selection')
+    if not 1<=document_limit<=100 or not selected or len(selected)>document_limit or len(set(selected))!=len(selected):raise ContractError('invalid_p5_document_selection')
     code_files={name:sha256((Path(__file__).parent/name).read_text(encoding='utf-8').encode()) for name in
         ('derived_sources.py','p5_audit.py','p5_acquisition.py','p5_collect.py','financial_facts.py','original_tie.py',
          'dated_pit.py','metadata_gap_audit.py','local_edinet.py','source_acquisition.py',
@@ -138,9 +138,11 @@ def run(edinet_root,p3_snapshot,input_dir,private_dir,snapshot,*,synthetic=False
     if sha256((p3/'documents.jsonl').read_bytes())!=bundle['selection']['p3_document_sha256']:raise ContractError('p3_selection_hash_mismatch')
     facts=[json.loads(x) for x in (p3/'canonical_facts.jsonl').read_bytes().splitlines() if json.loads(x)['doc_id'] in docs]
     config=json.loads((p3/'canonical_fact_definitions.json').read_bytes())['definitions']
-    archive=ReadOnlyEvidence(str(Path(edinet_root).resolve()),store,provenance_class='synthetic_fixture' if synthetic else 'preexisting_local_official_archive')
+    archive=open_evidence(str(Path(edinet_root).resolve()),store,provenance_class='synthetic_fixture' if synthetic else 'preexisting_local_official_archive')
     save('audit_plan.json',{'selection':bundle['selection'],'code_files':code_files,'input_bundle_sha256':sha256((source/'bundle.json').read_bytes()),
-        'canonical_write_policy':'read_only_no_mapping_promotion','source_classes':['official_original','derived_from_edinet','independent_external']})
+        'canonical_write_policy':'read_only_no_mapping_promotion','source_classes':['official_original','derived_from_edinet','independent_external'],
+        'original_storage':'comparison_referenced_locators' if compact_originals else 'all_indexed_locators',
+        'document_budget':document_limit,'shared_raw_store':str(Path(raw_store).resolve()) if raw_store else None})
     save('definitions.json',{'provider_normalized_component_rules':MART_FIELDS,'dei_field_rules':DEI_FIELDS,
         'p3_canonical_definition_sha256':sha256(encoded(config)),
         'text_rule':'HTML data extraction then whitespace removal; retain each provider string/hash separately',
@@ -169,7 +171,7 @@ def run(edinet_root,p3_snapshot,input_dir,private_dir,snapshot,*,synthetic=False
                 elif not {'doc_id','edinet_code','sec_code','period_end'}<=p.keys() or not any(p.get(k) for k in ('submit_date_time','submit_datetime','submit_date')):reason='source_document_schema_incomplete'
                 else:reason=document_link(p,docs[doc])
             if doc not in originals:reason='original_unverified'
-            link={'source_id':provider,'doc_id':doc,'entity_id':'edinet:'+docs[doc]['edinet_code'],
+            link={'source_id':provider,'doc_id':doc,'entity_id':'edinet:'+docs[doc]['edinet_code'] if docs[doc].get('edinet_code') else None,
                 'edinet_sec_code':docs[doc].get('secCode'),'source_row_ids':[r['source_row_id'] for r in match],
                 'status':'BLOCKED' if reason else 'PASS','missing_reason':reason,
                 'public_available_at':docs[doc]['public_available_at'],'provider_available_at':None,
@@ -288,7 +290,8 @@ def run(edinet_root,p3_snapshot,input_dir,private_dir,snapshot,*,synthetic=False
     linked_facts={f for c in comparisons for f in c['canonical_fact_ids']}
     lines('canonical_fact_references.jsonl',[{'fact_id':f['fact_id'],'doc_id':f['doc_id'],'p3_fact':f,
         'p3_fact_sha256':sha256(encoded(f)),'mapping_promoted':False} for f in facts if f['fact_id'] in linked_facts])
-    lines('official_observations.jsonl',list(origin_by_id.values()));lines('document_links.jsonl',link_rows)
+    used_origins={oid for c in comparisons for oid in c['origin_ids']}
+    lines('official_observations.jsonl',[o for key,o in origin_by_id.items() if not compact_originals or key in used_origins]);lines('document_links.jsonl',link_rows)
     lines('comparison_ledger.jsonl',comparisons);lines('source_matrix.jsonl',matrix);lines('failure_ledger.jsonl',failures)
     lines('lineage.jsonl',[{'comparison_id':c['comparison_id'],'source_row_id':c['source_row_id'],'origin_ids':c['origin_ids'],
         'component_row_ids':c['component_row_ids'],'canonical_fact_ids':c['canonical_fact_ids'],'upstream_evidence_group':c['upstream_evidence_group']} for c in comparisons])

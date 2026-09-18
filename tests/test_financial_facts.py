@@ -65,6 +65,30 @@ def extract(xml=None, d=None, extra=None):
 
 
 class FinancialFactsTests(unittest.TestCase):
+    def test_reviewed_modern_exact_qnames_roundtrip(self):
+        for version in ('2024-11-01','2025-11-01'):
+            # OperatingIncome is observed and explicitly reviewed in both releases.
+            raw=instance().replace(b'NetSales',b'OperatingIncome').replace(b'jppfs/2022-11-01/',('jppfs/'+version+'/').encode())
+            data,a,d,_,facts=extract(raw)
+            self.assertEqual(facts[0]['normalized_value'],'123000000')
+            self.assertEqual(reverse_verify(data,a,d,definitions(),facts)['checked_facts'],1)
+
+    def test_reviewed_2016_exact_qname_has_original_roundtrip(self):
+        raw=instance().replace(b'jppfs/2022-11-01/',b'jppfs/2016-02-29/')
+        data,a,d,_,facts=extract(raw)
+        self.assertEqual(facts[0]['normalized_value'],'123000000')
+        self.assertEqual(facts[0]['definition_version'],'edinet-financial-v2')
+        self.assertEqual(reverse_verify(data,a,d,definitions(),facts)['checked_facts'],1)
+
+    def test_extension_keeps_existing_fact_ids_and_does_not_match_unknown_year(self):
+        import json
+        from pathlib import Path
+        old=json.loads((Path(__file__).parents[1]/'registry/financial_definitions_v1.json').read_bytes())
+        data,a,d,_,facts=extract()
+        prior=canonicalize(extract_candidates(data,a,d,old),old)
+        self.assertEqual([f['fact_id'] for f in facts],[f['fact_id'] for f in prior])
+        self.assertEqual(extract(instance().replace(b'2022-11-01/jppfs_cor',b'2999-01-01/jppfs_cor'))[4],[])
+
     def test_every_value_reverse_resolves_to_bytes_context_unit_and_rule(self):
         data, a, d, _, facts = extract()
         self.assertEqual(reverse_verify(data, a, d, definitions(), facts)["non_null_facts"], 1)
