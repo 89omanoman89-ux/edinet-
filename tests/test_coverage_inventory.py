@@ -7,7 +7,7 @@ import tempfile
 import unittest
 
 from coverage_inventory import Inventory, day, file_hash, freeze_selection, partitions
-from coverage_replay import execute_sample, frame_for, verify_partition
+from coverage_replay import execute_sample, frame_for, verify_partition, refine_archive_queue, write_refined_queue
 from evidence_core import ContractError
 from source_acquisition import encoded, sha256
 from test_metadata_gap_audit import daily, row
@@ -227,6 +227,41 @@ class CoverageTests(unittest.TestCase):
         self.assertEqual(sorted(p.stem for p in (view/'documents').glob('*.zip')),['S0000001','S0000002','S0000003'])
         self.assertEqual(file_hash(view/'listings/2022-01-31/documents.json'),file_hash(self.meta))
         self.assertTrue((self.root/'documents/S0000004.zip').exists())
+
+    def test_layout_preserves_daily_files_outside_listings_directory(self):
+        from local_edinet import LocalArchive
+        from revision_series import inventory_series
+        from source_acquisition import PrivateStore
+        probe=self.root/'probes/list_2022-01-31.json';probe.parent.mkdir();probe.write_bytes(daily([row(9)]))
+        i=self.inventory();d=next(r for r in i.finalize_documents() if r['doc_id']=='S0000001')
+        view=frame_for(dict(d,year=2022,status='SELECTED'),{'raw':str(self.root)},self.base/'probe/frame',frozen_files=i.files)
+        archive=LocalArchive(view,PrivateStore(self.base/'checks'))
+        manifest,_,_=inventory_series(archive,{'challenge':['S0000001'],'probability':[]},
+            {'S0000001':{'doc_id':'S0000001','zip_files':[],'metadata_events':[]}},
+            json.loads((self.base/'probe/frame/universe_manifest.json').read_bytes()))
+        self.assertEqual(manifest['status'],'PASS');self.assertEqual(manifest['listing_count'],2)
+        self.assertEqual(file_hash(view/'listings/probes/list_2022-01-31.json'),file_hash(probe))
+
+    def test_queue_blocks_metadata_available_only_in_another_archive(self):
+        d={'document_types':['120'],'submit_date':'2025-06-01',
+           'originals':[{'root_id':'raw','relative_path':'S0000001.zip'}], 'metadata':[{'root_id':'other'}]}
+        p={'source':'edinet_original','table':'ZIP:120','month':'2025-06','status':'READY'}
+        r=list(refine_archive_queue([d],[p],{'other':2}))[0]
+        self.assertEqual(r['status'],'BLOCKED');self.assertTrue(r['global_metadata_not_assumed_missing'])
+        d['metadata'].append({'root_id':'raw'})
+        self.assertEqual(list(refine_archive_queue([d],[p],{}))[0]['status'],'READY')
+
+    def test_refined_ready_queue_is_consumable_and_inventory_changes_rejected(self):
+        i=self.inventory()
+        with redirect_stdout(io.StringIO()):i.finish()
+        output=self.base/'refined'
+        write_refined_queue(i.output,output)
+        queue=[json.loads(x) for x in (output/'expansion_queue.jsonl').read_bytes().splitlines()]
+        p=next(x for x in queue if x['source']=='edinet_original' and x['status']=='READY')
+        self.assertEqual(verify_partition(output,p['partition_id'])['status'],'READY')
+        (i.output/'document_coverage.jsonl').write_bytes(b'changed')
+        with self.assertRaisesRegex(ContractError,'refinement_inventory_changed'):
+            verify_partition(output,p['partition_id'])
 
 
 if __name__ == '__main__': unittest.main()

@@ -17,9 +17,71 @@ def rows(path):
             yield json.loads(line)
 
 
+def refine_archive_queue(documents, partitions, daily_counts):
+    """A ZIP present in a month does not satisfy the archive-local P3 metadata dependency.
+
+    Inspect the entire frozen annual frame, not success rates from the small sample.
+    Metadata observed in another root stays present in coverage; the job is BLOCKED
+    until that cross-archive input dependency is explicitly supported.
+    """
+    missing=Counter()
+    for d in documents:
+        if d.get('document_types')!=['120'] or not d.get('originals'):continue
+        preferred=min(d['originals'],key=lambda a:(-daily_counts.get(a['root_id'],0),a['root_id'],a['relative_path']))
+        if preferred['root_id'] not in {m['root_id'] for m in d.get('metadata',[])}:
+            missing[d.get('submit_date','')[:7]]+=1
+    for p in partitions:
+        result=dict(p)
+        if p['source']=='edinet_original' and p['table']=='ZIP:120' and missing[p['month']]:
+            result.update(status='BLOCKED',reason='selected_archive_metadata_dependency_missing',
+                          prior_status=p['status'],documents_with_missing_archive_local_metadata=missing[p['month']],
+                          global_metadata_not_assumed_missing=True,downstream_pipeline_status='BLOCKED')
+        yield result
+
+
+def write_refined_queue(inventory, output):
+    inventory, output=private_path(inventory),private_path(output)
+    if output==inventory or inventory in output.parents or output in inventory.parents:raise ContractError('refinement_output_overlap')
+    source_plan=json.loads((inventory/'inventory_plan.json').read_bytes())
+    for r in source_plan['plan']['roots']:
+        root=private_path(r['path'])
+        if output==root or root in output.parents or output in root.parents:raise ContractError('refinement_output_overlap')
+    counts=Counter(f['root_id'] for f in rows(inventory/'source_files.jsonl') if f['kind']=='edinet' and daily_path(f['relative_path']))
+    store=PrivateStore(output)
+    if any(output.iterdir()):raise ContractError('snapshot_already_exists')
+    common={'snapshot_id':output.name,'code_sha':file_hash(Path(__file__)),
+            'rights_review':'BLOCKED','export_allowed':False,'refinement_rule':'p56-archive-local-dependencies-v1'}
+    names=('inventory_plan.json','document_coverage.jsonl','expansion_queue.jsonl','source_files.jsonl')
+    before={n:file_hash(inventory/n) for n in names}
+    store.publish('plan.json',encoded(dict(common,input_artifact_sha256=before,source_inventory=str(inventory),source_snapshot_id=source_plan['snapshot_id'],
+        interpretation='READY is source-stage input readiness, not downstream PIT or research acceptance')))
+    states=Counter();annual=Counter()
+    with (output/'expansion_queue.jsonl').open('xb') as stream:
+        for p in refine_archive_queue(rows(inventory/'document_coverage.jsonl'),rows(inventory/'expansion_queue.jsonl'),counts):
+            states[p['status']]+=1
+            if p['source']=='edinet_original' and p['table']=='ZIP:120':annual[p['status']]+=1
+            stream.write(encoded(dict(p,**common))+b'\n')
+    if before!={n:file_hash(inventory/n) for n in names}:raise ContractError('inventory_changed')
+    store.publish('coverage_summary.json',encoded(dict(common,partition_states=dict(states),edinet_annual_partition_states=dict(annual),
+        original_inventory_unchanged=True,full_10_year_expansion_feasibility='BLOCKED')))
+    return dict(annual)
+
+
+def source_inventory(inventory):
+    """Resolve a refined queue without copying or changing its frozen inventory."""
+    root = private_path(inventory)
+    if (root/'inventory_plan.json').is_file(): return root
+    refinement = json.loads((root/'plan.json').read_bytes())
+    source = private_path(refinement['source_inventory'])
+    for name in ('inventory_plan.json','document_coverage.jsonl','expansion_queue.jsonl','source_files.jsonl'):
+        if file_hash(source/name) != refinement['input_artifact_sha256'].get(name):
+            raise ContractError('refinement_inventory_changed')
+    return source
+
+
 def verify_partition(inventory, partition_id):
     root = private_path(inventory)
-    plan = json.loads((root/'inventory_plan.json').read_bytes())['plan']
+    plan = json.loads((source_inventory(root)/'inventory_plan.json').read_bytes())['plan']
     roots = {r['id']: private_path(r['path']) for r in plan['roots']}
     matches = [r for r in rows(root/'expansion_queue.jsonl') if r['partition_id'] == partition_id]
     if len(matches) != 1: raise ContractError('partition_missing_or_ambiguous')
@@ -42,18 +104,21 @@ def run_p3_partition(inventory, partition_id, output, *, limit):
     from p3_audit import run as p3_run
     inventory, output = private_path(inventory), private_path(output)
     partition = verify_partition(inventory, partition_id)
+    queue_root = inventory
+    inventory = source_inventory(inventory)
     if partition['source'] != 'edinet_original' or partition['table'] != 'ZIP:120':
         raise ContractError('partition_requires_other_stage_dependencies')
     if not isinstance(limit, int) or not 1 <= limit <= 300: raise ContractError('invalid_partition_batch_limit')
     plan = json.loads((inventory/'inventory_plan.json').read_bytes())['plan']
     roots = {r['id']:r['path'] for r in plan['roots']}
-    for p in [inventory, *(private_path(v) for v in roots.values())]:
+    for p in [queue_root, inventory, *(private_path(v) for v in roots.values())]:
         if output == p or output in p.parents or p in output.parents: raise ContractError('partition_output_overlaps_input')
     docs = sorted((r for r in rows(inventory/'document_coverage.jsonl')
                    if r['submit_date'].startswith(partition['month']) and r['document_types']==['120'] and r['originals']),
                   key=lambda r:r['doc_id'])
     store = PrivateStore(output)
     before = {'inventory_manifest_sha256':file_hash(inventory/'inventory_plan.json'),
+        'queue_sha256':file_hash(queue_root/'expansion_queue.jsonl'),
         'partition_id':partition_id,'ordered_doc_ids':[d['doc_id'] for d in docs],
         'limit':limit,'definition_policy':'unchanged P3; one primary plus revision closure per batch'}
     # publish refuses replacement when either input identity or batch policy changes.
@@ -308,9 +373,11 @@ if __name__ == '__main__':
     p.add_argument('--output')
     p.add_argument('--verify-partition')
     p.add_argument('--p3-partition')
+    p.add_argument('--refine-queue', action='store_true')
     p.add_argument('--limit', type=int, default=1)
     args = p.parse_args()
-    if args.p3_partition and args.output: print(json.dumps(run_p3_partition(args.inventory,args.p3_partition,args.output,limit=args.limit)))
+    if args.refine_queue and args.output: print(json.dumps(write_refined_queue(args.inventory,args.output)))
+    elif args.p3_partition and args.output: print(json.dumps(run_p3_partition(args.inventory,args.p3_partition,args.output,limit=args.limit)))
     elif args.verify_partition: print(json.dumps(verify_partition(args.inventory, args.verify_partition)))
     elif args.output: run(args.inventory, args.output)
     else: p.error('--output or --verify-partition required')
