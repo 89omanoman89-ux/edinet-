@@ -1,0 +1,27 @@
+{
+  "definition_version": "p4-pit-market-v1",
+  "replay": "public_reconstruction_not_system_replay",
+  "identity": "explicit dated entity/security/code evidence; no name join, padding or code truncation",
+  "intervals": "date start inclusive, end exclusive; unknown validity is BLOCKED",
+  "listing": "separate from identifier validity; daily master presence does not prove listing boundaries",
+  "daily_entry": "first available full daily session starting strictly after disclosure and decision; scheduled candidate, not an execution claim",
+  "price": "only prior-day reported unadjusted close with verified publication before decision; same-day and future entry prices excluded",
+  "corporate_actions": "preserve original AdjFactor/ExRT; do not apply future adjustment factors; no price-times-shares valuation",
+  "daily_no_trade": "missing OHLC/Vo/Va cannot distinguish suspension from no transaction",
+  "p3": "as_of only; branch/conflict/null/unknown mapping/unavailable vintage retained, never filled from J-Quants",
+  "calendar": {"market": "TSE cash", "supported_from": "2016-01-01", "full_day_start_JST": "09:00", "full_day_close_before_2024-11-05": "15:00", "full_day_close_from_2024-11-05": "15:30", "HolDiv_0_and_3": "no TSE cash session", "HolDiv_2": "BLOCKED until half-day hours verified"},
+  "financial_comparison": "limited FY JP GAAP/IFRS reported fields; sources remain separate; IFRS equity/BPS definitions unresolved",
+  "rights_review": "BLOCKED",
+  "export_allowed": false,
+  "references": [
+    "https://jpx-jquants.com/ja/spec/eq-bars-daily",
+    "https://jpx-jquants.com/ja/spec/eq-bars-daily/adj",
+    "https://jpx-jquants.com/en/spec/eq-master",
+    "https://jpx-jquants.com/ja/spec/mkt-cal",
+    "https://jpx-jquants.com/ja/spec/mkt-cal/holiday-division",
+    "https://jpx-jquants.com/ja/spec/fin-summary",
+    "https://jpx-jquants.com/ja/spec/fin-summary/typeofdocument",
+    "https://www.jpx.co.jp/equities/trading/domestic/01.html",
+    "https://www.jpx.co.jp/corporate/news/news-releases/1030/20230920-01.html"
+  ]
+}
