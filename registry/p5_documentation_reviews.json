@@ -1,0 +1,103 @@
+{
+  "registry_version": "p5-documentation-review-v1",
+  "reviewed_on": "2026-09-18",
+  "reviewer": "Codex, explicit review of the saved document bytes and the scopes below",
+  "review_kind": "source specification only; not data, rights, or production approval",
+  "sources": {
+    "queria": {
+      "required_documents": ["README.md", "dataset.yml", "models/main/mart/mart_business_results.sql", "models/main/stg/stg_financial_facts.sql"],
+      "reviews": [
+        {
+          "source_id": "queria",
+          "document": "README.md",
+          "safe_url": "https://raw.githubusercontent.com/queria-io/dataset-edinet/4844ff654235d087d2cbd7521cd3c05af481ac15/README.md",
+          "expected_sha256": "f96bd899b52acf2333b21c5a09dc993edd12db8f8d7024a54b4b59d3fb1c367b",
+          "reviewed_source_version": "4844ff654235d087d2cbd7521cd3c05af481ac15",
+          "review_scope": ["Data origin, mart_documents, mart_companies, stg_financial_facts, mart_business_results and update sections"],
+          "known_limitations": ["Financial corrections are not reflected; historical coverage is being filled", "Company master is replaced with a current snapshot, not dated identifier history", "Reference code commit does not establish the data build commit or historical delivery time"],
+          "assertions_relied_upon": ["doc_id is the document key; edinet_code and sec_code identify the submitter; parent/status fields describe revisions", "stg originates in EDINET type=5 CSV and carries element_id, context_id, value and unit fields", "Business results is a normalized comparative-year view, not a new primary source"]
+        },
+        {
+          "source_id": "queria",
+          "document": "dataset.yml",
+          "safe_url": "https://raw.githubusercontent.com/queria-io/dataset-edinet/4844ff654235d087d2cbd7521cd3c05af481ac15/dataset.yml",
+          "expected_sha256": "9a24ece98ac2b0fd6c88daf322e947531b61b90399f6aff29ebb2d71585eb8e7",
+          "reviewed_source_version": "4844ff654235d087d2cbd7521cd3c05af481ac15",
+          "review_scope": ["Source, license label, temporal_coverage and financial-coverage declarations only"],
+          "known_limitations": ["Coverage and daily update frequency are provider claims, not measured completeness or availability", "License label and upstream link do not establish redistribution permission"],
+          "assertions_relied_upon": ["EDINET is the declared upstream, so this is derived_from_edinet", "JP-FSA-EDINET is the displayed license identifier; rights remain separately unresolved", "temporal_coverage starts at 2016-06-23 with no declared end; this is not the measured sample date range"]
+        },
+        {
+          "source_id": "queria",
+          "document": "models/main/mart/mart_business_results.sql",
+          "safe_url": "https://raw.githubusercontent.com/queria-io/dataset-edinet/4844ff654235d087d2cbd7521cd3c05af481ac15/models/main/mart/mart_business_results.sql",
+          "expected_sha256": "a4f79cc651dea84be5f6462259df75d1b4591091fbf6b6ac49e55e0167bd2448",
+          "reviewed_source_version": "4844ff654235d087d2cbd7521cd3c05af481ac15",
+          "review_scope": ["Summary selection, relative years, document-wide scope preference and normalized column expressions; reference SQL read, not executed"],
+          "known_limitations": ["Provider MAX/COALESCE can collapse candidates and accounting standards; the audit retains ambiguous candidates", "No canonical mapping approval; only the existing ten component definitions are traced", "Reference SQL is not proof of the observed dataset build version"],
+          "assertions_relied_upon": ["SummaryOfBusinessResults tags and CurrentYear/Prior1Year through Prior4Year contexts feed the view", "NonConsolidatedMember marks standalone; a document with consolidated rows prefers those rows", "IFRS and JP GAAP expressions are coalesced into provider columns and grouped by document and relative year"]
+        },
+        {
+          "source_id": "queria",
+          "document": "models/main/stg/stg_financial_facts.sql",
+          "safe_url": "https://raw.githubusercontent.com/queria-io/dataset-edinet/4844ff654235d087d2cbd7521cd3c05af481ac15/models/main/stg/stg_financial_facts.sql",
+          "expected_sha256": "ef0c44e42c8663a3d269af6f19b46dc108dcfbbe737a4ae64cd409a55b00446a",
+          "reviewed_source_version": "4844ff654235d087d2cbd7521cd3c05af481ac15",
+          "review_scope": ["Complete projection and document join; reference SQL read, not executed"],
+          "known_limitations": ["Document metadata is reduced to one row per doc_id, not a vintage history", "Data build commit remains unknown; saved catalog SQL and raw bytes are separate evidence"],
+          "assertions_relied_upon": ["Raw value, element_id, context_id, unit fields, csv_type and row_seq are projected", "numeric_value is a DECIMAL(38,4) conversion; raw value is preserved separately", "Submitter and period fields come from a doc_id join to document metadata"]
+        }
+      ]
+    },
+    "youseiushida": {
+      "required_documents": ["README.md", "LICENSE", "src/edinet/extension/_schema.py"],
+      "reviews": [
+        {
+          "source_id": "youseiushida",
+          "document": "README.md",
+          "safe_url": "https://raw.githubusercontent.com/youseiushida/edinet/70f9a20ddc685283b06e68ef15132e6b81ea59c3/README.md",
+          "expected_sha256": "829f3758d55a701a4ccdf9651481b0957b11478360f6fbf86b3f6f1c168b36bb",
+          "reviewed_source_version": "70f9a20ddc685283b06e68ef15132e6b81ea59c3",
+          "review_scope": ["Parquet persistence and restoration section only: export tables, preserved information and limitations"],
+          "known_limitations": ["Claims of complete restoration are not original-byte proof", "Resolver and raw_facts are not persisted; some statements need taxonomy", "This review does not adopt canonical-key extraction, PIT or performance claims elsewhere in README"],
+          "assertions_relied_upon": ["The export separates filings, line_items, text_blocks, contexts, dei, calc_edges and def_parents", "Text blocks are a separate table; doc_id identifies filings across tables", "Calculation relations and a flattened definition parent index are distinct outputs"]
+        },
+        {
+          "source_id": "youseiushida",
+          "document": "LICENSE",
+          "safe_url": "https://raw.githubusercontent.com/youseiushida/edinet/70f9a20ddc685283b06e68ef15132e6b81ea59c3/LICENSE",
+          "expected_sha256": "cd4ab150870e4a50e3c7336db5f36c5c97d5299cd88eeacf49861bf95a91d90c",
+          "reviewed_source_version": "70f9a20ddc685283b06e68ef15132e6b81ea59c3",
+          "review_scope": ["Opening software-license notice and license identity only; no legal rights review"],
+          "known_limitations": ["Software licensing does not resolve redistribution rights for derived EDINET rows or upstream material"],
+          "assertions_relied_upon": ["The program notice identifies GNU Affero General Public License version 3 or later; record this as a software label only"]
+        },
+        {
+          "source_id": "youseiushida",
+          "document": "src/edinet/extension/_schema.py",
+          "safe_url": "https://raw.githubusercontent.com/youseiushida/edinet/70f9a20ddc685283b06e68ef15132e6b81ea59c3/src/edinet/extension/_schema.py",
+          "expected_sha256": "f14daf46023c695626fc8838d239fe74ef37de72c92152f064e009d6dfc72c87",
+          "reviewed_source_version": "70f9a20ddc685283b06e68ef15132e6b81ea59c3",
+          "review_scope": ["All seven table schema definitions and SCHEMAS mapping; read as source specification without importing provider code"],
+          "known_limitations": ["Schema declarations alone cannot prove acquired rows or original locators", "def_parents has local concept pairs without namespace, role or complete path; retain unresolved", "Duplicate original members or contexts cannot be selected from these declarations alone"],
+          "assertions_relied_upon": ["filings carries identifiers, submission timestamp, periods, parent_doc_id and status fields", "line_items/text_blocks carry namespace_uri, concept, context_id, unit_ref, period, entity_id, dimensions_json, nil and source_line", "contexts and dei preserve separate structure and identifier fields", "calc_edges carries role_uri, parent/child href, weight and order; def_parents only doc_id and concept pairs"]
+        }
+      ]
+    },
+    "numad": {
+      "required_documents": ["README.md"],
+      "reviews": [
+        {
+          "source_id": "numad",
+          "document": "README.md",
+          "safe_url": "https://huggingface.co/datasets/numad/yuho-text-2014-2022/raw/e1dd7e00d5de82aa1b00cf7a28c829d327a93ca7/README.md",
+          "expected_sha256": "d4653a9f28f3c9c30c00b4ae2136596ebbbdb9fcb6457d01236e01b2b543fbe2",
+          "reviewed_source_version": "e1dd7e00d5de82aa1b00cf7a28c829d327a93ca7",
+          "review_scope": ["Complete dataset card: provenance, declared coverage, field definitions and license label"],
+          "known_limitations": ["Card does not supply namespace, contextRef or historical provider delivery time", "2014-2022 and the 2014-06-14 start are provider claims, not audited full coverage", "Apache-2.0 display does not settle upstream EDINET rights"],
+          "assertions_relied_upon": ["Records are extracted sections of EDINET annual reports, not independent primary evidence", "doc_id, edinet_code, optional sec_code, period dates and day-precision submit_date support document matching", "tag and text identify extracted blocks; url declares the source but is not a source tie", "The dataset card displays apache-2.0 separately from EDINET upstream conditions"]
+        }
+      ]
+    }
+  }
+}

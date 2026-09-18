@@ -13,6 +13,7 @@
 P2で残った102件のmetadata欠損の調査結果は [metadata欠損監査](docs/METADATA_GAPS.md) に記録しています。
 固定標本の限定的な財務標準化・訂正vintage・原本lineageは [P3実装記録](docs/P3.md) を参照してください。
 既存J-Quantsのread-only監査と、日付ごとの直接観測による限定的な正のPIT結合は [P4実装記録](docs/P4.md) に記録しています。公式scheduleを用いるpublic reconstructionであり、system replayは未確立です。
+Queria・youseiushida・numadを同じ原本へ接続する限定受入と比較台帳は [P5実装記録](docs/P5.md) に記録しています。派生ソースを独立証拠として加算せず、P3値は変更しません。
 
 ## 最初に読む
 

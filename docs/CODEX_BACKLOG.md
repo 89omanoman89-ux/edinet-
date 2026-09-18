@@ -57,6 +57,8 @@ available_at、snapshot_cutoff、system replay、訂正、取下げ、null更新
 
 ## P5 — 多様な情報ブロック
 
+現在の限定実装は[派生3ソースの受入と原本比較](P5.md)。Queria・youseiushida・numadから既存ID/lineageへ接続する段階であり、以下の増分研究評価や人的資本等は未実施。
+
 numad/CUC/詳細XBRLの本文、人的資本、投資内訳、株主/政策保有、segmentを順に追加。
 各追加ソースについてP0の受入手続きを再実施。指標だけでなく抽出根拠と範囲を移植する。
 
