@@ -22,8 +22,8 @@ def observation(fields, dataset="equities_bars_daily"):
 
 def calendar(start="2022-05-30", count=15):
     day = date.fromisoformat(start)
-    return [observation({"Date": (day+timedelta(days=i)).isoformat(), "HolDiv": "0" if (day+timedelta(days=i)).weekday() >= 5 else "1"},
-                        "markets_calendar") for i in range(count)]
+    return [dict(observation({"Date": (day+timedelta(days=i)).isoformat(), "HolDiv": "0" if (day+timedelta(days=i)).weekday() >= 5 else "1"},
+                        "markets_calendar"), public_available_at="2022-01-01T00:00:00+09:00") for i in range(count)]
 
 
 class PITMarketTests(unittest.TestCase):
@@ -222,6 +222,13 @@ class PITMarketTests(unittest.TestCase):
     def test_price_projection_cannot_disagree_with_verified_source_row(self):
         self.price['close']='999'
         self.assertEqual(self.join()['missing_reason'],'price_projection_source_mismatch')
+
+    def test_calendar_vintage_must_precede_decision(self):
+        target=next(r for r in self.calendar if r['provider_fields']['Date']=='2022-06-02')
+        target['public_available_at']=self.decision
+        self.assertEqual(self.join()['missing_reason'],'calendar_not_yet_available')
+        target['public_available_at']=None
+        self.assertEqual(self.join()['missing_reason'],'calendar_vintage_not_established')
 
     def test_synthetic_calendar_cannot_lose_its_classification(self):
         self.fact['synthetic']=False; self.price['synthetic']=False

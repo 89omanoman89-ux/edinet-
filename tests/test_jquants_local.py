@@ -100,6 +100,7 @@ class P4OutputTests(unittest.TestCase):
         before={p:snapshot_fingerprints(p) for p in (self.jq,self.root,self.p3)}
         summary=self.audit();self.assertEqual(summary['empirical_pit_join'],'BLOCKED')
         self.assertEqual(summary['complete_pit_joins'],0)
+        self.assertIn('calendar_vintage_not_established',summary['failure_counts'])
         self.assertEqual(before,{p:snapshot_fingerprints(p) for p in before})
         folder=self.base/'p4/synthetic-p4'
         for name in ('jquants_inventory.json','security_identity_map.jsonl','trading_calendar.jsonl','market_observations.jsonl',

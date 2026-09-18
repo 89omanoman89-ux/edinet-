@@ -97,7 +97,8 @@ def run(jquants_root, edinet_root, p3_snapshot, private_dir, snapshot, *, synthe
     save("jquants_inventory.json", {"plan": plan, "files": profiles, "original_files_audited": len(profiles),
         "status": "BLOCKED" if failures else "PASS", "source_version_vs_local_revision_separate": True,
         "unselected_files": "NOT RUN; declared ranges/counts are manifest claims only"})
-    calendar = [r for r in observations if r["dataset"] == "markets_calendar"]
+    calendar = [dict(r, public_available_at=None, missing_reason="calendar_vintage_not_established")
+                for r in observations if r["dataset"] == "markets_calendar"]
     masters = [r for r in observations if r["dataset"] == "equities_master"]
     prices, financial = [], []
     for row in observations:
@@ -160,6 +161,7 @@ def run(jquants_root, edinet_root, p3_snapshot, private_dir, snapshot, *, synthe
     for m in mappings:
         failures.extend({"stage": "identity", "mapping_id": m["mapping_id"], "doc_id": m["doc_id"], "reason": r} for r in m["missing_reasons"])
     failures.extend({"stage": "market_time", "observation_id": p["observation_id"], "reason": p["missing_reason"]} for p in prices if p.get("missing_reason"))
+    failures.extend({"stage": "calendar_time", "observation_id": r["observation_id"], "reason": r["missing_reason"]} for r in calendar)
     lines("security_identity_map.jsonl", mappings); lines("trading_calendar.jsonl", calendar)
     lines("jquants_source_rows.jsonl", observations); lines("market_observations.jsonl", prices)
     lines("jquants_financial_observations.jsonl", financial); lines("pit_join_rows.jsonl", joined)

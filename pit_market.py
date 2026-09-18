@@ -170,6 +170,9 @@ def join_fact(fact, p3_view, mappings, calendar, prices, trading_status, *, deci
         out.update(security_id=mapping["security_id"], jquants_code=mapping["jquants_code"], mapping_id=mapping["mapping_id"],
             mapping_evidence=mapping["mapping_evidence"], identifier_validity={k: mapping[k] for k in
                 ("identifier_validity_from", "identifier_validity_to", "listing_from", "listing_to")})
+        for r in used_calendar:
+            if not r.get("public_available_at"): raise ContractError("calendar_vintage_not_established")
+            if instant(r["public_available_at"]) >= instant(decision_at): raise ContractError("calendar_not_yet_available")
         statuses = [s for s in trading_status if s["security_id"] == mapping["security_id"] and
                     instant(s["valid_from"]) <= instant(session["start"]) < instant(s["valid_to"])]
         if len(statuses) != 1: raise ContractError("trading_status_unknown_or_ambiguous")
