@@ -1,0 +1,8 @@
+# Optional private Parquet/catalog acquisition only. Python 3.12, Windows/Linux x86_64.
+# Public offline CI requires only the standard library.
+duckdb==1.5.5 \
+    --hash=sha256:7a6d2d11859d82a936ebdcb30ce3d8a1cbb3e990bff05c12abb9b54c44fa7bd1 \
+    --hash=sha256:ddfbdb096c11d51ee22492397d342c90a82e62c5d09961477895934d0a25372f
+pyarrow==25.0.1 \
+    --hash=sha256:5389cdf79447ed1515c9e31620e6e1e2302249564d603f2ad727d4f6d313e4c3 \
+    --hash=sha256:8858d7bfc22e3f51529aeaa4077225029724623e4595dc9eff8c793935c34140
