@@ -45,9 +45,11 @@ def inventory(archive):
             st = archive._path(relative).stat()
             records[doc]["zip_files"].append({"relative_path": relative, "byte_count": st.st_size,
                                              "mtime_ns": st.st_mtime_ns})
-    listings, errors, listed_ids = [], [], set()
+    listings, errors, listed_ids, auxiliary_count = [], [], set(), 0
     for path in sorted((archive.root / "listings").rglob("*.json")):
-        if path.name.endswith(".manifest.json"): continue
+        if path.name.endswith(".manifest.json") or any(p.startswith(".") for p in path.relative_to(archive.root).parts):
+            auxiliary_count += 1
+            continue
         relative = path.relative_to(archive.root).as_posix()
         try:
             data, st = archive._bytes(relative)
@@ -78,6 +80,7 @@ def inventory(archive):
         "security_code_coverage": {"present": sum(bool(r.get("secCode")) for r in rows),
                                    "null_or_metadata_missing": sum(not r.get("secCode") for r in rows)},
         "daily_metadata_coverage": {"files": len(listings), "unique_days": len(days),
+            "excluded_auxiliary_json_files": auxiliary_count,
             "date_range": [days[0], days[-1]] if days else None,
             "frame_docs_with_events": sum(bool(r["metadata_events"]) for r in records.values()),
             "listing_only_doc_ids": len(listed_ids - records.keys()), "invalid_files": len(errors)},
@@ -290,7 +293,7 @@ def audit_document(archive, record, overlap):
 
 
 def run(root, private_dir, snapshot, *, seed=20260918, probability_count=15, challenge_count=20,
-        screen_limit=120, min_entities=30, numad_manifest=None, synthetic=False):
+        screen_limit=120, min_entities=30, numad_manifest=None, synthetic=False, frozen_selection=None):
     if not re.fullmatch(r"[A-Za-z0-9_-]+", snapshot): raise ContractError("invalid_snapshot_id")
     if min(probability_count, challenge_count, screen_limit, min_entities) < 1 or (
         probability_count + challenge_count + screen_limit > 300):
@@ -311,6 +314,20 @@ def run(root, private_dir, snapshot, *, seed=20260918, probability_count=15, cha
     manifest.update(selection_timestamp=utcnow(), fixed_random_seed=seed, selection_rule=SELECTION_RULE,
         code_files=hashes, probability_count=probability_count, challenge_count=challenge_count,
         structural_screen_limit=screen_limit, minimum_reporting_entities=min_entities)
+    previous = None
+    if frozen_selection:
+        path = Path(frozen_selection).resolve()
+        LocalArchive._outside_git(path)
+        previous = json.loads(path.read_bytes())
+        old_manifest = json.loads((path.parent / "universe_manifest.json").read_bytes())
+        old_records = {r["doc_id"]: {k: v for k, v in r.items() if k not in common}
+                       for r in map(json.loads, (path.parent / "universe_documents.jsonl").read_bytes().splitlines())}
+        if (encoded(old_records) != encoded(records) or any(old_manifest[k] != manifest[k] for k in (
+            "fixed_random_seed", "probability_count", "challenge_count", "structural_screen_limit", "minimum_reporting_entities"))):
+            raise ContractError("frozen_selection_frame_changed")
+        manifest["selection_timestamp"] = old_manifest["selection_timestamp"]
+        manifest["frozen_selection"] = {"snapshot_id": previous["snapshot_id"],
+            "selected_documents_sha256": sha256(path.read_bytes()), "selection_code_sha": previous["code_sha"]}
     # This durable frame is published BEFORE any sample selection or structural screening.
     save("universe_manifest.json", manifest)
     lines("universe_documents.jsonl", records.values())
@@ -341,6 +358,10 @@ def run(root, private_dir, snapshot, *, seed=20260918, probability_count=15, cha
         screens.append({"doc_id": doc, "categories": sorted(categories[doc]), "profile": p})
     lines("structural_screen.jsonl", screens)
     selected = choose(records, categories, seed, probability_count, challenge_count, min_entities)
+    if previous:
+        if any(selected[k] != previous[k] for k in ("probability", "challenge", "challenge_reasons")):
+            raise ContractError("frozen_selection_changed_no_replacement_allowed")
+        selected["frozen_selection"] = manifest["frozen_selection"]
     save("selected_documents.json", selected)
     for group in ("challenge", "probability"):
         save(f"{group}_sample.json", {"sample_kind": group, "doc_ids": selected[group],
@@ -400,7 +421,9 @@ if __name__ == "__main__":
     parser.add_argument("--screen-limit", type=int, default=120)
     parser.add_argument("--min-entities", type=int, default=30)
     parser.add_argument("--numad-manifest")
+    parser.add_argument("--frozen-selection", help="Prior private selected_documents.json; exact frame and sample required")
     args = parser.parse_args()
     run(args.edinet_local_root, args.private_dir, args.snapshot, seed=args.seed,
         probability_count=args.probability_count, challenge_count=args.challenge_count,
-        screen_limit=args.screen_limit, min_entities=args.min_entities, numad_manifest=args.numad_manifest)
+        screen_limit=args.screen_limit, min_entities=args.min_entities, numad_manifest=args.numad_manifest,
+        frozen_selection=args.frozen_selection)

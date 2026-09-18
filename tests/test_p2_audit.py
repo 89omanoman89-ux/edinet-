@@ -70,10 +70,10 @@ class P2Tests(unittest.TestCase):
         records = records if records is not None else p2.inventory(self.archive)[1]
         return p2.choose(records, p2.metadata_categories(records), 42, 2, 3, 3)
 
-    def run_fixture(self, snapshot="synthetic"):
+    def run_fixture(self, snapshot="synthetic", **kwargs):
         with redirect_stdout(io.StringIO()):
             return p2.run(self.root, self.private, snapshot, seed=42, probability_count=2,
-                challenge_count=3, screen_limit=6, min_entities=3, synthetic=True)
+                challenge_count=3, screen_limit=6, min_entities=3, synthetic=True, **kwargs)
 
     def test_fixed_seed_same_sample_independent_of_input_order(self):
         _, records = p2.inventory(self.archive)
@@ -214,6 +214,26 @@ class P2Tests(unittest.TestCase):
         self.assertIn("loss_fact", p2.structural_categories(p))
         self.assertEqual(p["numeric_fact_count"], 1)
         self.assertNotIn("financial_values", p)
+
+    def test_attempt_logs_are_not_daily_metadata_failures(self):
+        log = self.root / "listings" / "2022-01-31" / ".attempts" / "synthetic" / "manifest.json"
+        log.parent.mkdir(parents=True); log.write_bytes(b"SYNTHETIC LOG NOT DAILY JSON")
+        manifest, _ = p2.inventory(self.archive)
+        self.assertEqual(manifest["daily_metadata_coverage"]["excluded_auxiliary_json_files"], 1)
+        self.assertEqual(manifest["inventory_failures"], [])
+
+    def test_reaudit_new_snapshot_must_keep_original_selection(self):
+        original = self.run_fixture()
+        path = self.private / "synthetic" / "selected_documents.json"
+        again = self.run_fixture("synthetic-v2", frozen_selection=path)
+        for key in ("challenge", "probability", "challenge_reasons"):
+            self.assertEqual(original["selected"][key], again["selected"][key])
+
+    def test_changed_frame_rejects_frozen_selection_reaudit(self):
+        self.run_fixture()
+        (self.root / "documents" / "S0000001.zip").write_bytes(b"CHANGED")
+        with self.assertRaisesRegex(ContractError, "frozen_selection_frame_changed"):
+            self.run_fixture("synthetic-v2", frozen_selection=self.private / "synthetic" / "selected_documents.json")
 
 
 if __name__ == "__main__": unittest.main()
