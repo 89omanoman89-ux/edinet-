@@ -66,6 +66,12 @@ numad/CUC/詳細XBRLの本文、人的資本、投資内訳、株主/政策保�
 同じ原本のmirrorを独立観測として水増ししない。LLM経路は明示的opt-in。
 本文/画像の公開や外部モデルへの送信は、利用条件とユーザー承認を確認してから行う。
 
+## P5.5 — 私有snapshotの利用契約と照会
+
+[利用ガイド](CHATGPT_DATA_USAGE.md)と機械可読table契約を入口に、P3–P5のID・時点・BLOCKED・lineageを保持したprivate packageを生成する。
+immutable snapshotのhash/row count/schema/lineageと入力保存を検査してからCURRENTだけを切り替える。
+公開Gitにはコード・仕様・合成テストのみ。Drive upload・新規金融値・return・研究評価は行わない。
+
 ## P6 — 仮説・実験台帳と時間分割
 
 registryの研究仕様を機械可読にし、全試行と状態遷移をappend-onlyで保存する。
