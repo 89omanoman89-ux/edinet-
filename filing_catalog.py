@@ -154,7 +154,7 @@ def edinet_metadata(data):
             raise ContractError("EDINET application status/schema mismatch")
         if type(metadata["resultset"]["count"]) is not int or metadata["resultset"]["count"] != len(rows):
             raise ContractError("EDINET count mismatch")
-        seen = set()
+        seen, identifier_warnings = set(), []
         for row in rows:
             if not isinstance(row, dict) or not (EDINET_COLUMNS | {"seqNumber"}) <= row.keys():
                 raise ContractError("Missing EDINET columns")
@@ -168,7 +168,13 @@ def edinet_metadata(data):
             check_code(row["secCode"], r"[0-9A-Z]{4,5}")
             for key in ("edinetCode", "issuerEdinetCode", "subjectEdinetCode"):
                 check_code(row[key], r"E\d{5}")
-            check_code(row["parentDocID"], r"S[0-9A-Z]{7}")
+            # API spec 3-1-2-2 (No.30) gives an 8-character half-width string,
+            # not an uppercase-only value. Preserve case; never repair the ID.
+            check_code(row["parentDocID"], r"S[0-9A-Za-z]{7}")
+            if row["parentDocID"] and not re.fullmatch(r"S[0-9A-Z]{7}", row["parentDocID"]):
+                identifier_warnings.append({"field": "parentDocID", "seqNumber": row["seqNumber"],
+                    "reason": "parent_reference_case_unverified",
+                    "value_sha256": sha256(row["parentDocID"].encode("utf-8"))})
             for key, allowed in (("withdrawalStatus", {"0", "1", "2"}),
                                  ("docInfoEditStatus", {"0", "1", "2"}),
                                  ("disclosureStatus", {"0", "1", "2", "3"})):
@@ -176,6 +182,7 @@ def edinet_metadata(data):
                     raise ContractError("Unknown document status")
         profile = profile_rows(rows) if rows else {"row_count": 0, "columns": None,
             "schema_sha256": None, "missing_reason": "no_rows_to_profile"}
+        profile["identifier_warnings"] = identifier_warnings
         return rows, profile
     except (ValueError, TypeError, KeyError):
         raise ContractError("EDINET metadata schema mismatch") from None
