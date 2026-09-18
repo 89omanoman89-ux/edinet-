@@ -1,0 +1,825 @@
+{
+  "definition_version": "edinet-financial-v1",
+  "representation": "reported",
+  "families": [
+    "Revenue",
+    "Operating Profit",
+    "Net Profit",
+    "Total Assets",
+    "Equity / Net Assets",
+    "CFO",
+    "CFI",
+    "Shares",
+    "EPS",
+    "BPS"
+  ],
+  "rules": [
+    {
+      "rule_id": "jppfs.NetSales",
+      "metric": "revenue_sales",
+      "family": "Revenue",
+      "accounting_standard": "JP GAAP",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2017-02-28/jppfs_cor}NetSales",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-02-28/jppfs_cor}NetSales",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-03-31/jppfs_cor}NetSales",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2019-11-01/jppfs_cor}NetSales",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2020-11-01/jppfs_cor}NetSales",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2021-11-01/jppfs_cor}NetSales",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2022-11-01/jppfs_cor}NetSales"
+      ]
+    },
+    {
+      "rule_id": "jpcrp.NetSalesSummaryOfBusinessResults",
+      "metric": "revenue_sales",
+      "family": "Revenue",
+      "accounting_standard": "JP GAAP",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2017-02-28/jpcrp_cor}NetSalesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-02-28/jpcrp_cor}NetSalesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-03-31/jpcrp_cor}NetSalesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2019-11-01/jpcrp_cor}NetSalesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2020-11-01/jpcrp_cor}NetSalesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2021-11-01/jpcrp_cor}NetSalesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2022-11-01/jpcrp_cor}NetSalesSummaryOfBusinessResults"
+      ]
+    },
+    {
+      "rule_id": "jpcrp.RevenueIFRSSummaryOfBusinessResults",
+      "metric": "revenue_ifrs",
+      "family": "Revenue",
+      "accounting_standard": "IFRS",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2017-02-28/jpcrp_cor}RevenueIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-02-28/jpcrp_cor}RevenueIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-03-31/jpcrp_cor}RevenueIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2019-11-01/jpcrp_cor}RevenueIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2020-11-01/jpcrp_cor}RevenueIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2021-11-01/jpcrp_cor}RevenueIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2022-11-01/jpcrp_cor}RevenueIFRSSummaryOfBusinessResults"
+      ]
+    },
+    {
+      "rule_id": "jppfs.OperatingIncome",
+      "metric": "operating_profit",
+      "family": "Operating Profit",
+      "accounting_standard": "JP GAAP",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2017-02-28/jppfs_cor}OperatingIncome",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-02-28/jppfs_cor}OperatingIncome",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-03-31/jppfs_cor}OperatingIncome",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2019-11-01/jppfs_cor}OperatingIncome",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2020-11-01/jppfs_cor}OperatingIncome",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2021-11-01/jppfs_cor}OperatingIncome",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2022-11-01/jppfs_cor}OperatingIncome"
+      ]
+    },
+    {
+      "rule_id": "jpigp.OperatingProfitLossIFRS",
+      "metric": "operating_profit",
+      "family": "Operating Profit",
+      "accounting_standard": "IFRS",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2020-11-01/jpigp_cor}OperatingProfitLossIFRS",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2021-11-01/jpigp_cor}OperatingProfitLossIFRS"
+      ]
+    },
+    {
+      "rule_id": "jppfs.ProfitLoss",
+      "metric": "net_profit_total",
+      "family": "Net Profit",
+      "accounting_standard": "JP GAAP",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2017-02-28/jppfs_cor}ProfitLoss",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-02-28/jppfs_cor}ProfitLoss",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-03-31/jppfs_cor}ProfitLoss",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2019-11-01/jppfs_cor}ProfitLoss",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2020-11-01/jppfs_cor}ProfitLoss",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2021-11-01/jppfs_cor}ProfitLoss",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2022-11-01/jppfs_cor}ProfitLoss"
+      ]
+    },
+    {
+      "rule_id": "jpcrp.NetIncomeLossSummaryOfBusinessResults",
+      "metric": "net_profit_total",
+      "family": "Net Profit",
+      "accounting_standard": "JP GAAP",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2017-02-28/jpcrp_cor}NetIncomeLossSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-02-28/jpcrp_cor}NetIncomeLossSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-03-31/jpcrp_cor}NetIncomeLossSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2019-11-01/jpcrp_cor}NetIncomeLossSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2020-11-01/jpcrp_cor}NetIncomeLossSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2021-11-01/jpcrp_cor}NetIncomeLossSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2022-11-01/jpcrp_cor}NetIncomeLossSummaryOfBusinessResults"
+      ]
+    },
+    {
+      "rule_id": "jppfs.ProfitLossAttributableToOwnersOfParent",
+      "metric": "net_profit_owners",
+      "family": "Net Profit",
+      "accounting_standard": "JP GAAP",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2017-02-28/jppfs_cor}ProfitLossAttributableToOwnersOfParent",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-02-28/jppfs_cor}ProfitLossAttributableToOwnersOfParent",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-03-31/jppfs_cor}ProfitLossAttributableToOwnersOfParent",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2019-11-01/jppfs_cor}ProfitLossAttributableToOwnersOfParent",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2020-11-01/jppfs_cor}ProfitLossAttributableToOwnersOfParent",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2021-11-01/jppfs_cor}ProfitLossAttributableToOwnersOfParent",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2022-11-01/jppfs_cor}ProfitLossAttributableToOwnersOfParent"
+      ]
+    },
+    {
+      "rule_id": "jpcrp.ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults",
+      "metric": "net_profit_owners",
+      "family": "Net Profit",
+      "accounting_standard": "JP GAAP",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2017-02-28/jpcrp_cor}ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-02-28/jpcrp_cor}ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-03-31/jpcrp_cor}ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2019-11-01/jpcrp_cor}ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2020-11-01/jpcrp_cor}ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2021-11-01/jpcrp_cor}ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2022-11-01/jpcrp_cor}ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults"
+      ]
+    },
+    {
+      "rule_id": "jpigp.ProfitLossIFRS",
+      "metric": "net_profit_total",
+      "family": "Net Profit",
+      "accounting_standard": "IFRS",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2020-11-01/jpigp_cor}ProfitLossIFRS",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2021-11-01/jpigp_cor}ProfitLossIFRS"
+      ]
+    },
+    {
+      "rule_id": "jpcrp.ProfitLossAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+      "metric": "net_profit_owners",
+      "family": "Net Profit",
+      "accounting_standard": "IFRS",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2017-02-28/jpcrp_cor}ProfitLossAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-02-28/jpcrp_cor}ProfitLossAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-03-31/jpcrp_cor}ProfitLossAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2019-11-01/jpcrp_cor}ProfitLossAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2020-11-01/jpcrp_cor}ProfitLossAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2021-11-01/jpcrp_cor}ProfitLossAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2022-11-01/jpcrp_cor}ProfitLossAttributableToOwnersOfParentIFRSSummaryOfBusinessResults"
+      ]
+    },
+    {
+      "rule_id": "jppfs.Assets",
+      "metric": "assets_total",
+      "family": "Total Assets",
+      "accounting_standard": "JP GAAP",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "instant",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2017-02-28/jppfs_cor}Assets",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-02-28/jppfs_cor}Assets",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-03-31/jppfs_cor}Assets",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2019-11-01/jppfs_cor}Assets",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2020-11-01/jppfs_cor}Assets",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2021-11-01/jppfs_cor}Assets",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2022-11-01/jppfs_cor}Assets"
+      ]
+    },
+    {
+      "rule_id": "jpcrp.TotalAssetsSummaryOfBusinessResults",
+      "metric": "assets_total",
+      "family": "Total Assets",
+      "accounting_standard": "JP GAAP",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "instant",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2017-02-28/jpcrp_cor}TotalAssetsSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-02-28/jpcrp_cor}TotalAssetsSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-03-31/jpcrp_cor}TotalAssetsSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2019-11-01/jpcrp_cor}TotalAssetsSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2020-11-01/jpcrp_cor}TotalAssetsSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2021-11-01/jpcrp_cor}TotalAssetsSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2022-11-01/jpcrp_cor}TotalAssetsSummaryOfBusinessResults"
+      ]
+    },
+    {
+      "rule_id": "jpigp.AssetsIFRS",
+      "metric": "assets_total",
+      "family": "Total Assets",
+      "accounting_standard": "IFRS",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "instant",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2020-11-01/jpigp_cor}AssetsIFRS",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2021-11-01/jpigp_cor}AssetsIFRS"
+      ]
+    },
+    {
+      "rule_id": "jpcrp.TotalAssetsIFRSSummaryOfBusinessResults",
+      "metric": "assets_total",
+      "family": "Total Assets",
+      "accounting_standard": "IFRS",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "instant",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2017-02-28/jpcrp_cor}TotalAssetsIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-02-28/jpcrp_cor}TotalAssetsIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-03-31/jpcrp_cor}TotalAssetsIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2019-11-01/jpcrp_cor}TotalAssetsIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2020-11-01/jpcrp_cor}TotalAssetsIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2021-11-01/jpcrp_cor}TotalAssetsIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2022-11-01/jpcrp_cor}TotalAssetsIFRSSummaryOfBusinessResults"
+      ]
+    },
+    {
+      "rule_id": "jppfs.NetAssets",
+      "metric": "net_assets_total",
+      "family": "Equity / Net Assets",
+      "accounting_standard": "JP GAAP",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "instant",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2017-02-28/jppfs_cor}NetAssets",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-02-28/jppfs_cor}NetAssets",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-03-31/jppfs_cor}NetAssets",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2019-11-01/jppfs_cor}NetAssets",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2020-11-01/jppfs_cor}NetAssets",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2021-11-01/jppfs_cor}NetAssets",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2022-11-01/jppfs_cor}NetAssets"
+      ]
+    },
+    {
+      "rule_id": "jpcrp.NetAssetsSummaryOfBusinessResults",
+      "metric": "net_assets_total",
+      "family": "Equity / Net Assets",
+      "accounting_standard": "JP GAAP",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "instant",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2017-02-28/jpcrp_cor}NetAssetsSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-02-28/jpcrp_cor}NetAssetsSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-03-31/jpcrp_cor}NetAssetsSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2019-11-01/jpcrp_cor}NetAssetsSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2020-11-01/jpcrp_cor}NetAssetsSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2021-11-01/jpcrp_cor}NetAssetsSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2022-11-01/jpcrp_cor}NetAssetsSummaryOfBusinessResults"
+      ]
+    },
+    {
+      "rule_id": "jppfs.ShareholdersEquity",
+      "metric": "shareholders_equity",
+      "family": "Equity / Net Assets",
+      "accounting_standard": "JP GAAP",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "instant",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2017-02-28/jppfs_cor}ShareholdersEquity",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-02-28/jppfs_cor}ShareholdersEquity",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-03-31/jppfs_cor}ShareholdersEquity",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2019-11-01/jppfs_cor}ShareholdersEquity",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2020-11-01/jppfs_cor}ShareholdersEquity",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2021-11-01/jppfs_cor}ShareholdersEquity",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2022-11-01/jppfs_cor}ShareholdersEquity"
+      ]
+    },
+    {
+      "rule_id": "jpigp.EquityIFRS",
+      "metric": "equity_total",
+      "family": "Equity / Net Assets",
+      "accounting_standard": "IFRS",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "instant",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2020-11-01/jpigp_cor}EquityIFRS",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2021-11-01/jpigp_cor}EquityIFRS"
+      ]
+    },
+    {
+      "rule_id": "jpcrp.EquityAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+      "metric": "equity_owners",
+      "family": "Equity / Net Assets",
+      "accounting_standard": "IFRS",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "instant",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2017-02-28/jpcrp_cor}EquityAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-02-28/jpcrp_cor}EquityAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-03-31/jpcrp_cor}EquityAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2019-11-01/jpcrp_cor}EquityAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2020-11-01/jpcrp_cor}EquityAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2021-11-01/jpcrp_cor}EquityAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2022-11-01/jpcrp_cor}EquityAttributableToOwnersOfParentIFRSSummaryOfBusinessResults"
+      ]
+    },
+    {
+      "rule_id": "jppfs.NetCashProvidedByUsedInOperatingActivities",
+      "metric": "cfo",
+      "family": "CFO",
+      "accounting_standard": "JP GAAP",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2017-02-28/jppfs_cor}NetCashProvidedByUsedInOperatingActivities",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-02-28/jppfs_cor}NetCashProvidedByUsedInOperatingActivities",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-03-31/jppfs_cor}NetCashProvidedByUsedInOperatingActivities",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2019-11-01/jppfs_cor}NetCashProvidedByUsedInOperatingActivities",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2020-11-01/jppfs_cor}NetCashProvidedByUsedInOperatingActivities",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2021-11-01/jppfs_cor}NetCashProvidedByUsedInOperatingActivities",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2022-11-01/jppfs_cor}NetCashProvidedByUsedInOperatingActivities"
+      ]
+    },
+    {
+      "rule_id": "jpcrp.NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults",
+      "metric": "cfo",
+      "family": "CFO",
+      "accounting_standard": "JP GAAP",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2017-02-28/jpcrp_cor}NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-02-28/jpcrp_cor}NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-03-31/jpcrp_cor}NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2019-11-01/jpcrp_cor}NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2020-11-01/jpcrp_cor}NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2021-11-01/jpcrp_cor}NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2022-11-01/jpcrp_cor}NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults"
+      ]
+    },
+    {
+      "rule_id": "jpigp.NetCashProvidedByUsedInOperatingActivitiesIFRS",
+      "metric": "cfo",
+      "family": "CFO",
+      "accounting_standard": "IFRS",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2020-11-01/jpigp_cor}NetCashProvidedByUsedInOperatingActivitiesIFRS",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2021-11-01/jpigp_cor}NetCashProvidedByUsedInOperatingActivitiesIFRS"
+      ]
+    },
+    {
+      "rule_id": "jpcrp.CashFlowsFromUsedInOperatingActivitiesIFRSSummaryOfBusinessResults",
+      "metric": "cfo",
+      "family": "CFO",
+      "accounting_standard": "IFRS",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2017-02-28/jpcrp_cor}CashFlowsFromUsedInOperatingActivitiesIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-02-28/jpcrp_cor}CashFlowsFromUsedInOperatingActivitiesIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-03-31/jpcrp_cor}CashFlowsFromUsedInOperatingActivitiesIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2019-11-01/jpcrp_cor}CashFlowsFromUsedInOperatingActivitiesIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2020-11-01/jpcrp_cor}CashFlowsFromUsedInOperatingActivitiesIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2021-11-01/jpcrp_cor}CashFlowsFromUsedInOperatingActivitiesIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2022-11-01/jpcrp_cor}CashFlowsFromUsedInOperatingActivitiesIFRSSummaryOfBusinessResults"
+      ]
+    },
+    {
+      "rule_id": "jppfs.NetCashProvidedByUsedInInvestmentActivities",
+      "metric": "cfi",
+      "family": "CFI",
+      "accounting_standard": "JP GAAP",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2017-02-28/jppfs_cor}NetCashProvidedByUsedInInvestmentActivities",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-02-28/jppfs_cor}NetCashProvidedByUsedInInvestmentActivities",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-03-31/jppfs_cor}NetCashProvidedByUsedInInvestmentActivities",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2019-11-01/jppfs_cor}NetCashProvidedByUsedInInvestmentActivities",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2020-11-01/jppfs_cor}NetCashProvidedByUsedInInvestmentActivities",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2021-11-01/jppfs_cor}NetCashProvidedByUsedInInvestmentActivities",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2022-11-01/jppfs_cor}NetCashProvidedByUsedInInvestmentActivities"
+      ]
+    },
+    {
+      "rule_id": "jpcrp.NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults",
+      "metric": "cfi",
+      "family": "CFI",
+      "accounting_standard": "JP GAAP",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2017-02-28/jpcrp_cor}NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-02-28/jpcrp_cor}NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-03-31/jpcrp_cor}NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2019-11-01/jpcrp_cor}NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2020-11-01/jpcrp_cor}NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2021-11-01/jpcrp_cor}NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2022-11-01/jpcrp_cor}NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults"
+      ]
+    },
+    {
+      "rule_id": "jpigp.NetCashProvidedByUsedInInvestingActivitiesIFRS",
+      "metric": "cfi",
+      "family": "CFI",
+      "accounting_standard": "IFRS",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2020-11-01/jpigp_cor}NetCashProvidedByUsedInInvestingActivitiesIFRS",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2021-11-01/jpigp_cor}NetCashProvidedByUsedInInvestingActivitiesIFRS"
+      ]
+    },
+    {
+      "rule_id": "jpcrp.CashFlowsFromUsedInInvestingActivitiesIFRSSummaryOfBusinessResults",
+      "metric": "cfi",
+      "family": "CFI",
+      "accounting_standard": "IFRS",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2017-02-28/jpcrp_cor}CashFlowsFromUsedInInvestingActivitiesIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-02-28/jpcrp_cor}CashFlowsFromUsedInInvestingActivitiesIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-03-31/jpcrp_cor}CashFlowsFromUsedInInvestingActivitiesIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2019-11-01/jpcrp_cor}CashFlowsFromUsedInInvestingActivitiesIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2020-11-01/jpcrp_cor}CashFlowsFromUsedInInvestingActivitiesIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2021-11-01/jpcrp_cor}CashFlowsFromUsedInInvestingActivitiesIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2022-11-01/jpcrp_cor}CashFlowsFromUsedInInvestingActivitiesIFRSSummaryOfBusinessResults"
+      ]
+    },
+    {
+      "rule_id": "jpcrp.TotalNumberOfIssuedSharesSummaryOfBusinessResults",
+      "metric": "shares_issued_gross",
+      "family": "Shares",
+      "accounting_standard": "JP GAAP",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "instant",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "shares",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2017-02-28/jpcrp_cor}TotalNumberOfIssuedSharesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-02-28/jpcrp_cor}TotalNumberOfIssuedSharesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-03-31/jpcrp_cor}TotalNumberOfIssuedSharesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2019-11-01/jpcrp_cor}TotalNumberOfIssuedSharesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2020-11-01/jpcrp_cor}TotalNumberOfIssuedSharesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2021-11-01/jpcrp_cor}TotalNumberOfIssuedSharesSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2022-11-01/jpcrp_cor}TotalNumberOfIssuedSharesSummaryOfBusinessResults"
+      ]
+    },
+    {
+      "rule_id": "jpcrp.BasicEarningsLossPerShareSummaryOfBusinessResults",
+      "metric": "eps_basic_reported",
+      "family": "EPS",
+      "accounting_standard": "JP GAAP",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY/share",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2017-02-28/jpcrp_cor}BasicEarningsLossPerShareSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-02-28/jpcrp_cor}BasicEarningsLossPerShareSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-03-31/jpcrp_cor}BasicEarningsLossPerShareSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2019-11-01/jpcrp_cor}BasicEarningsLossPerShareSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2020-11-01/jpcrp_cor}BasicEarningsLossPerShareSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2021-11-01/jpcrp_cor}BasicEarningsLossPerShareSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2022-11-01/jpcrp_cor}BasicEarningsLossPerShareSummaryOfBusinessResults"
+      ]
+    },
+    {
+      "rule_id": "jpcrp.BasicEarningsLossPerShareIFRSSummaryOfBusinessResults",
+      "metric": "eps_basic_reported",
+      "family": "EPS",
+      "accounting_standard": "IFRS",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "duration",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY/share",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2017-02-28/jpcrp_cor}BasicEarningsLossPerShareIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-02-28/jpcrp_cor}BasicEarningsLossPerShareIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-03-31/jpcrp_cor}BasicEarningsLossPerShareIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2019-11-01/jpcrp_cor}BasicEarningsLossPerShareIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2020-11-01/jpcrp_cor}BasicEarningsLossPerShareIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2021-11-01/jpcrp_cor}BasicEarningsLossPerShareIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2022-11-01/jpcrp_cor}BasicEarningsLossPerShareIFRSSummaryOfBusinessResults"
+      ]
+    },
+    {
+      "rule_id": "jpcrp.NetAssetsPerShareSummaryOfBusinessResults",
+      "metric": "bps_net_assets_reported",
+      "family": "BPS",
+      "accounting_standard": "JP GAAP",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "instant",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY/share",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2017-02-28/jpcrp_cor}NetAssetsPerShareSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-02-28/jpcrp_cor}NetAssetsPerShareSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-03-31/jpcrp_cor}NetAssetsPerShareSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2019-11-01/jpcrp_cor}NetAssetsPerShareSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2020-11-01/jpcrp_cor}NetAssetsPerShareSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2021-11-01/jpcrp_cor}NetAssetsPerShareSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2022-11-01/jpcrp_cor}NetAssetsPerShareSummaryOfBusinessResults"
+      ]
+    },
+    {
+      "rule_id": "jpcrp.EquityToAssetRatioIFRSSummaryOfBusinessResults",
+      "metric": "bps_owners_reported",
+      "family": "BPS",
+      "accounting_standard": "IFRS",
+      "scopes": [
+        "consolidated",
+        "standalone"
+      ],
+      "period_kind": "instant",
+      "period_rule": "edinet_context_id_and_explicit_dates_v1",
+      "normalized_unit": "JPY/share",
+      "accepted_qnames": [
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2017-02-28/jpcrp_cor}EquityToAssetRatioIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-02-28/jpcrp_cor}EquityToAssetRatioIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-03-31/jpcrp_cor}EquityToAssetRatioIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2019-11-01/jpcrp_cor}EquityToAssetRatioIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2020-11-01/jpcrp_cor}EquityToAssetRatioIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2021-11-01/jpcrp_cor}EquityToAssetRatioIFRSSummaryOfBusinessResults",
+        "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2022-11-01/jpcrp_cor}EquityToAssetRatioIFRSSummaryOfBusinessResults"
+      ]
+    }
+  ],
+  "taxonomy_sources": [
+    {
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2017-02-28/jpcrp_cor",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2017-02-28/jpcrp_cor_2017-02-28.xsd",
+      "byte_sha256": "2afb8dbdf1bba58bd23214817e7d1f5c4d440298bec0d37e200ce62607a372b4"
+    },
+    {
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-02-28/jpcrp_cor",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-02-28/jpcrp_cor_2018-02-28.xsd",
+      "byte_sha256": "4682137b691146aa5a4e892d72e77f10f0b38a8a34918153a564aaad3793248b"
+    },
+    {
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-03-31/jpcrp_cor",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2018-03-31/jpcrp_cor_2018-03-31.xsd",
+      "byte_sha256": "22854bfb78b963b94eb6c3c67a902ee0957b762874f55334ea681f6ab7e693cc"
+    },
+    {
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2019-11-01/jpcrp_cor",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2019-11-01/jpcrp_cor_2019-11-01.xsd",
+      "byte_sha256": "68a5d015795212aeda81577a0a44dbb7053ea32394b02de3d178aeceb05dff9e"
+    },
+    {
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2020-11-01/jpcrp_cor",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2020-11-01/jpcrp_cor_2020-11-01.xsd",
+      "byte_sha256": "6057436e33f8aad377e347cb9cad00d93b29636a4706fc430bbed0b12e22512b"
+    },
+    {
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2021-11-01/jpcrp_cor",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2021-11-01/jpcrp_cor_2021-11-01.xsd",
+      "byte_sha256": "007a58c603415461bdd6d5fe55000cccdd6d4719939c2435a3adc4b4299903d9"
+    },
+    {
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2022-11-01/jpcrp_cor",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2022-11-01/jpcrp_cor_2022-11-01.xsd",
+      "byte_sha256": "caece74cfd297bd1373cae353878b7b3ac857fafc9aaf1c23eb4a7c4235bd8e1"
+    },
+    {
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jpdei/2013-08-31/jpdei_cor",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jpdei/2013-08-31/jpdei_cor_2013-08-31.xsd",
+      "byte_sha256": "348aac3e31df90e98245efa34b6a8f519a4bd80c929436d33035ee4b7bdf6e23"
+    },
+    {
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2020-11-01/jpigp_cor",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2020-11-01/jpigp_cor_2020-11-01.xsd",
+      "byte_sha256": "05755bbac77751dec1a1f53773f4a8213a7c467c788bf4859b6490584b28e280"
+    },
+    {
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2021-11-01/jpigp_cor",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2021-11-01/jpigp_cor_2021-11-01.xsd",
+      "byte_sha256": "a2caefa7467d8ebfc8896492dde517ecba135c09bc12ecbed29cc0f25bd1e59c"
+    },
+    {
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2017-02-28/jppfs_cor",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2017-02-28/jppfs_cor_2017-02-28.xsd",
+      "byte_sha256": "0fb020bcc289568940a8b8ddb5279a2284e722e462e9a37d1e4bcc1deb8e92a4"
+    },
+    {
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-02-28/jppfs_cor",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-02-28/jppfs_cor_2018-02-28.xsd",
+      "byte_sha256": "a6657e5f2fc278a096c1b4bb7e61da35f3d8290dcfd4a940fe9fe324d01bf63d"
+    },
+    {
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-03-31/jppfs_cor",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2018-03-31/jppfs_cor_2018-03-31.xsd",
+      "byte_sha256": "9d8d68bd0e17bbc8568e0799cfee6f3bc167f30b04833367226af7295531e013"
+    },
+    {
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2019-11-01/jppfs_cor",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2019-11-01/jppfs_cor_2019-11-01.xsd",
+      "byte_sha256": "bdcf82aef390912e79cd2727bdd50f122126b62ec83dad7147f4a481a315562e"
+    },
+    {
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2020-11-01/jppfs_cor",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2020-11-01/jppfs_cor_2020-11-01.xsd",
+      "byte_sha256": "12c354497ced8f65cda4ab56329cf7c717a7fbf8eeb8d6cb7c286b848972773f"
+    },
+    {
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2021-11-01/jppfs_cor",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2021-11-01/jppfs_cor_2021-11-01.xsd",
+      "byte_sha256": "30e88c012da85160c36d617a465527202ea14e69487be207de2c9f449efe572d"
+    },
+    {
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2022-11-01/jppfs_cor",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2022-11-01/jppfs_cor_2022-11-01.xsd",
+      "byte_sha256": "54abd73d1336269efd19c769eb04128c7be3123a4118b6e8d8fb090a1de6ab29"
+    }
+  ],
+  "scope_rule": "explicit EDINET NonConsolidatedMember; otherwise consolidated only with DEI=true and supported financial context",
+  "company_specific_mapping": "disabled_without_verified_relationship",
+  "units": {
+    "JPY": "{http://www.xbrl.org/2003/iso4217}JPY",
+    "shares": "{http://www.xbrl.org/2003/instance}shares",
+    "JPY/share": "JPY divided by shares"
+  },
+  "value_rule": "XBRL instance numeric lexical Decimal; decimals is precision, never a scale multiplier",
+  "derived_definitions": {
+    "standalone_from_ytd.v1": "same fiscal start/entity/metric/scope/standard/unit/dimensions/vintage basis; adjacent cumulative endpoints; only additive flows"
+  },
+  "out_of_scope": [
+    "shares_average",
+    "shares_treasury_adjusted",
+    "computed_eps",
+    "computed_bps",
+    "cfo_plus_cfi",
+    "cfo_minus_capex"
+  ],
+  "references": [
+    "https://www.fsa.go.jp/search/20221108.html",
+    "https://www.fsa.go.jp/search/20221108/2b-1_InstanceGuide.pdf",
+    "https://www.xbrl.org/Specification/XBRL-2.1/REC-2003-12-31/XBRL-2.1-REC-2003-12-31+corrected-errata-2013-02-20.html"
+  ]
+}
