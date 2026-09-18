@@ -150,6 +150,8 @@ class Acquirer:
         self.store, self.send, self.sleep, self.now = store, send, sleep, now
         self.secret_getter = secret_getter
         self.min_interval, self.attempts = min_interval, attempts
+        self.cache_hits = 0
+        self.network_attempts = 0
 
     def fetch(self, task):
         identity = task.identity()
@@ -158,6 +160,7 @@ class Acquirer:
         if checkpoint.exists():
             result = json.loads(checkpoint.read_bytes())
             self.store.read_raw(result)
+            self.cache_hits += 1
             return result
         for path in (self.store.root / "failures").glob("*.json"):
             failure = json.loads(path.read_bytes())
@@ -190,6 +193,7 @@ class Acquirer:
             self.sleep(self.min_interval)
             status, response_headers, data = None, {}, b""
             try:
+                self.network_attempts += 1
                 status, response_headers, data = self.send(url, headers, task.max_bytes, bool(key))
                 response_headers = {k.lower(): v for k, v in response_headers.items()}
                 reason = self._validate(task, status, response_headers, data)
