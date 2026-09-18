@@ -80,3 +80,14 @@ packageのpayloadから**全ファイルbytesとSHAが完全一致で再構成�
 元P5.5 CURRENTには書き込まない。新rootにも既存snapshotを上書きしない。
 canonical/PIT合格、source tie、rights、研究利用可否を混同しない。
 詳細な件数・年別状態・欠損・保存証明は最終snapshotの機械可読成果物を正とする。
+
+最終`document_coverage.jsonl.gz`は元inventoryの全doc IDを保持する。
+原本なし、未完了partition、原本照合済み候補、canonical view適格、PIT適格、rightsを別状態にする。
+旧inventoryの理由は`prior_inventory_missing_reasons`へ分離し、古い「未監査」を新しい結果の理由と混ぜない。
+`expansion_queue.jsonl.gz`のCOMPLETEは`execution_scope`に記した工程の完了である。
+metadata/source inventory完了をPIT完了に読み替えない。元のUNKNOWN/BLOCKEDも`prior_status`で保持する。
+P4対象外のTOPIXや、原本がない加工行の依存不足を消さない。
+
+`source_catalog.json`は全ローカルmetadata・加工行index・検証済みJ-Quants cacheへの私有参照を持つ。
+PITに結合されなかったsource行も所在とhashを追跡できるが、canonical/PIT値へ昇格しない。
+publication前にoffline tests、CI、固定標本、全入力の保存証明をhash固定したacceptance gateが必要。

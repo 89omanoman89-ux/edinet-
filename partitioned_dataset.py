@@ -6,6 +6,7 @@ Repeated market/mirror evidence retains its partition occurrence and source ID.
 from collections import Counter,defaultdict
 from datetime import datetime
 import json
+import gzip
 from pathlib import Path
 import sqlite3
 
@@ -20,6 +21,156 @@ from source_acquisition import PrivateStore,encoded,sha256,utcnow
 
 VERSION='private-partitioned-query-v1'
 ROUTED=('documents','canonical_facts','pit_join_rows','derived_source_links','derived_source_rows','text_index')
+EXCLUSIVE=ROUTED[:3]
+
+
+def binary_key(identifier):
+    if len(identifier)==64:
+        try:return b'h'+bytes.fromhex(identifier)
+        except ValueError:pass
+    return b't'+identifier.encode()
+
+
+def verify_frozen_inputs(inventory,output):
+    """Final full rehash, including old snapshots and CURRENT; no digest reuse."""
+    from coverage_inventory import bounded_map
+    from expansion_archive import lines
+    inventory=private_path(inventory);store=PrivateStore(private_path(output))
+    plan=json.loads((inventory/'inventory_plan.json').read_bytes())['plan']
+    roots={r['id']:private_path(r['path']) for r in plan['roots']}
+    if any(store.root==p or p in store.root.parents or store.root in p.parents for p in roots.values()):raise ContractError('preservation_output_overlap')
+    files=list(lines(inventory/'source_files.jsonl'))
+    expected={(f['root_id'],f['relative_path']) for f in files}
+    actual={(rid,p.relative_to(root).as_posix()) for rid,root in roots.items() for p in root.rglob('*') if p.is_file()}
+    if expected!=actual:raise ContractError('input_file_set_changed')
+    def verify(f):
+        p=(roots[f['root_id']]/f['relative_path']).resolve()
+        if roots[f['root_id']] not in p.parents:raise ContractError('input_path_escape')
+        before=p.stat();h=file_hash(p);after=p.stat()
+        if (before.st_size,before.st_mtime_ns)!=(after.st_size,after.st_mtime_ns):raise ContractError('input_changed_during_read')
+        if (h,after.st_size,after.st_mtime_ns)!=(f['byte_sha256'],f['byte_count'],f['mtime_ns']):raise ContractError('input_bytes_changed')
+    for _ in bounded_map(verify,files):pass
+    proof={'status':'PASS','files_rehashed':len(files),'bytes_rehashed':sum(f['byte_count'] for f in files),
+        'source_files_sha256':file_hash(inventory/'source_files.jsonl'),'observed_at':utcnow(),
+        'comparison':'exact file set + all bytes SHA256 + byte count + mtime, including prior CURRENT',
+        'code_sha':file_hash(Path(__file__))}
+    store.publish('preservation_proof.json',encoded(proof));return proof
+
+
+def coverage_records(documents,processed):
+    """Every inventoried document survives, including derived-only and metadata-only."""
+    for d in documents:
+        state=processed.get(d['doc_id']);reasons=[]
+        original=bool(d.get('originals'))
+        if not original:reasons.append('official_original_not_available')
+        elif state is None:reasons.append('partition_not_completed')
+        if state and state.get('document_failure'):reasons.append(state['document_failure'])
+        if state:
+            if not state['source_tied_facts']:reasons.append('no_source_tied_canonical_fact')
+            if not state['canonical_eligible_facts']:reasons.append('canonical_view_blocked_or_no_accepted_mapping')
+            if not state['pit_pass']:reasons.append('no_PIT_eligible_row')
+        yield {'doc_id':d['doc_id'],'submit_date':d.get('submit_date'),'source_ids':d.get('sources',[]),
+            'data_exists':True,'official_original_available':original,
+            'pipeline_execution':'COMPLETE' if state else 'BLOCKED',
+            'source_tied':'PASS' if state and state['source_tied_facts'] else 'BLOCKED',
+            'canonical_eligible':'PASS' if state and state['canonical_eligible_facts'] else 'BLOCKED',
+            'pit_eligible':'PASS' if state and state['pit_pass'] else 'BLOCKED',
+            'research_ready':'BLOCKED','rights_review':'BLOCKED','export_allowed':False,
+            'audit':state,'missing_reasons':sorted(set(reasons+['rights_unresolved'])),
+            'prior_inventory_missing_reasons':d.get('missing_reasons',[])}
+
+
+def write_expansion_coverage(plan,out,processed,job_results):
+    from expansion_archive import lines
+    inventory=Path(plan['inventory']);months=defaultdict(set);states=Counter();years=defaultdict(Counter)
+    by_doc={d:r for r in job_results for d in r['doc_ids']}
+    archive_manifest=json.loads((Path(plan['archive_index'])/'cross_archive_index.json').read_bytes())
+    metadata_failures={r['relative_path'] for r in archive_manifest['failures']}
+    for r in coverage_records(lines(inventory/'document_coverage.jsonl'),processed):
+        year=r['submit_date'][:4] if r['submit_date'] else 'unknown'
+        years[year]['observed_documents']+=1
+        for key in ('official_original_available','source_tied','canonical_eligible','pit_eligible'):
+            if r[key] is True or r[key]=='PASS':years[year][key]+=1
+    def write_gzip(path,records):
+        common={'snapshot_id':out.name,'code_sha':file_hash(Path(__file__))}
+        expected=Counter();count=0
+        shape=lambda r:json.dumps(sorted((k,type(v).__name__) for k,v in r.items()),separators=(',',':'))
+        with Path(path).open('xb') as f,gzip.GzipFile(fileobj=f,mode='wb',mtime=0) as z:
+            for r in records:
+                value=dict(r,**common);z.write(encoded(value)+b'\n');expected[shape(value)]+=1;count+=1
+        actual=Counter()
+        with gzip.open(path,'rt',encoding='utf-8') as f:
+            for line in f:
+                value=json.loads(line)
+                if any(value[k]!=v for k,v in common.items()) or value['export_allowed'] is not False:raise ContractError('coverage_envelope_mismatch')
+                actual[shape(value)]+=1
+        if expected!=actual:raise ContractError('coverage_schema_or_count_mismatch')
+        return {'row_count':count,'schema_profiles':[{'fields':json.loads(s),'rows':n} for s,n in sorted(actual.items())],'roundtrip':'PASS'}
+    # Input pass counts are independent of the yearly primary sample used for validation.
+    profiles={'document_coverage.jsonl.gz':write_gzip(out/'document_coverage.jsonl.gz',coverage_records(lines(inventory/'document_coverage.jsonl'),processed))}
+    for d in lines(inventory/'document_coverage.jsonl'):
+        if d.get('originals'):
+            for t in d.get('document_types',[]):months[(d.get('submit_date') or '')[:7],t].add(d['doc_id'])
+    def queue():
+        for p in lines(inventory/'expansion_queue.jsonl'):
+            r=dict(p,prior_status=p['status'],rights_review='BLOCKED',export_allowed=False)
+            source=p['source'];status='BLOCKED';reason=p.get('reason') or 'input_partition_not_available'
+            if p['input_artifacts']:
+                if source=='edinet_original':
+                    docs=months[p['month'],p['table'].removeprefix('ZIP:')]
+                    outcomes=[by_doc.get(d) for d in docs]
+                    status='COMPLETE' if docs and all(x and x['status']=='COMPLETE' for x in outcomes) else 'BLOCKED'
+                    reason='all_available_documents_executed; consult row-level eligibility' if status=='COMPLETE' else 'document_partition_execution_blocked'
+                    r['job_ids']=sorted({x['job_id'] for x in outcomes if x})
+                    r['execution_scope']='P3_P4_P5_P55_for_available_originals'
+                elif source=='edinet_metadata':
+                    bad=any(a['root_id']+'/'+a['relative_path'] in metadata_failures for a in p['input_artifacts'])
+                    status='BLOCKED' if bad else 'COMPLETE';reason='metadata_index_rejected_input' if bad else 'read_only_cross_archive_metadata_index; raw absence retained'
+                    r['execution_scope']='metadata_inventory_and_revision_discovery'
+                elif source=='jquants':
+                    if p['table']=='indices_topix_daily':reason='dataset_outside_existing_P4_contract'
+                    else:
+                        cached=all((Path(plan['row_cache'])/a['byte_sha256']/'manifest.json').is_file() for a in p['input_artifacts'])
+                        status='COMPLETE' if cached else 'BLOCKED'
+                        reason='all_saved_rows_cached_and_roundtripped; PIT rows require EDINET and dated evidence' if cached else 'jquants_row_cache_missing_or_failed'
+                    r['execution_scope']='source_inventory; EDINET-linked PIT outcomes are separate'
+                elif source in ('queria','youseiushida','numad'):
+                    status='COMPLETE';reason='available_saved_rows_indexed; original_overlap_required_for_comparison'
+                    r['execution_scope']='saved_bytes_only; unavailable ranges and original dependencies remain BLOCKED'
+                else:
+                    status='COMPLETE';reason='prior_immutable_snapshot_preserved; not reclassified as new evidence'
+                    r['execution_scope']='input_preservation_only'
+            r.update(status=status,reason=reason,research_ready='BLOCKED',downstream_pipeline_status='see_document_coverage')
+            states[status]+=1;yield r
+    profiles['expansion_queue.jsonl.gz']=write_gzip(out/'expansion_queue.jsonl.gz',queue())
+    PrivateStore(out).publish('coverage_artifact_profiles.json',encoded(profiles))
+    return {'year_document_states':{k:dict(v) for k,v in sorted(years.items())},'source_partition_states':dict(states)}
+
+
+def source_catalog(plan):
+    """Expose saved source coverage without promoting unjoined rows to canonical/PIT."""
+    result={'rights_review':'BLOCKED','export_allowed':False,'independent_evidence_increment':0,
+        'source_inventory':plan['inventory'],'source_inventory_hashes':plan['input_hashes'],
+        'raw_data_are_external_read_only':True,'sources':{}}
+    for name,root,manifest_name,database,expected in (
+        ('edinet',Path(plan['archive_index']),'cross_archive_index.json','archive.sqlite',plan['archive_manifest_sha256']),
+        ('derived_from_edinet',Path(plan['derived_index']),'manifest.json','derived.sqlite',plan['derived_manifest_sha256'])):
+        if file_hash(root/manifest_name)!=expected:raise ContractError('source_catalog_manifest_changed')
+        m=json.loads((root/manifest_name).read_bytes())
+        if file_hash(root/database)!=m['database_sha256']:raise ContractError('source_catalog_database_changed')
+        result['sources'][name]={'index_root':str(root),'manifest':manifest_name,'manifest_sha256':expected,
+            'database':database,'database_sha256':m['database_sha256'],'counts':m.get('counts',{'rows':m.get('rows')}),
+            'canonical_eligibility':'requires original tie and P3 rules','pit_eligibility':'requires dated P4 evidence'}
+    cache=Path(plan['row_cache']);files=[]
+    for p in sorted(cache.glob('*/manifest.json')):
+        m=json.loads(p.read_bytes());parquet=p.parent/'rows.parquet'
+        if m['roundtrip']!='PASS' or file_hash(parquet)!=m['parquet_sha256']:raise ContractError('source_cache_changed')
+        files.append({'manifest':str(p),'manifest_sha256':file_hash(p),'parquet_sha256':m['parquet_sha256'],
+            'source_sha256':m['source_sha256'],'dataset':m['profile']['dataset'],'date_range':m['profile']['date_range'],'rows':m['row_count']})
+    result['sources']['jquants']={'raw_root':plan['jquants_root'],'cache_root':str(cache),'files':files,
+        'scope':'all decoded saved files within the existing P4 dataset contract; TOPIX is inventory only',
+        'financial_independence':'NOT ESTABLISHED','pit_eligibility':'source presence alone is insufficient'}
+    return result
 
 
 def merge_entity(existing,incoming):
@@ -36,32 +187,45 @@ def merge_entity(existing,incoming):
 
 def publish_federation(root,snapshot,*,codec=None,synthetic=False):
     root=private_path(root);plan_raw=(root/'expansion_plan.json').read_bytes();plan=json.loads(plan_raw)
+    gate=None
+    if not synthetic:
+        if not (root/'acceptance_gate.json').is_file():raise ContractError('final_acceptance_gate_missing')
+        gate=json.loads((root/'acceptance_gate.json').read_bytes())
+        if gate.get('code_files')!=plan['code_files']:raise ContractError('acceptance_code_mismatch')
+        for key in ('offline_tests','offline_CI','input_preservation','fixed_cross_year'):
+            check=gate.get(key,{})
+            if check.get('status')!='PASS':raise ContractError('acceptance_gate_blocked:'+key)
+            path=private_path(check['evidence_path'])
+            if file_hash(path)!=check['evidence_sha256']:raise ContractError('acceptance_evidence_changed')
     digest=sha256(plan_raw);out=safe_path(root,'snapshots/'+snapshot)
     store=PrivateStore(out)
     if any(out.iterdir()):raise ContractError('snapshot_already_exists')
     db=sqlite3.connect(out/'locator.sqlite')
     db.executescript('''CREATE TABLE entities (id TEXT PRIMARY KEY,payload BLOB);
         CREATE TABLE entity_shards (entity TEXT,shard INTEGER,PRIMARY KEY(entity,shard));
-        CREATE TABLE locations (kind INTEGER,id BLOB,shard INTEGER,PRIMARY KEY(kind,id,shard));
+        CREATE TABLE exclusive_locations (kind INTEGER,id BLOB,shard INTEGER,PRIMARY KEY(kind,id)) WITHOUT ROWID;
+        CREATE TABLE shared_locations (kind INTEGER,id BLOB,shard INTEGER,PRIMARY KEY(kind,id,shard)) WITHOUT ROWID;
         CREATE TABLE documents (id TEXT PRIMARY KEY,entity TEXT,shard INTEGER);
     ''')
-    shards=[];entities={};totals=Counter();states=Counter();years=defaultdict(Counter);blocked=[]
-    unique_ids={name:set() for name in ('documents',)}
-    # Enforce primary ID uniqueness with SQLite, without holding millions of IDs in RAM.
-    db.execute('CREATE TABLE exclusive_ids (kind INTEGER,id BLOB,PRIMARY KEY(kind,id))')
+    shards=[];entities={};totals=Counter();states=Counter();years=defaultdict(Counter);blocked=[];processed={};job_results=[]
+    # WITHOUT ROWID enforces IDs without duplicating a multi-million-row index.
     for job in plan['jobs']:
         folder=root/'jobs'/job['job_id']
         if not (folder/'result.json').is_file():raise ContractError('unfinished_expansion_job')
         result=validate_checkpoint(folder,digest)
+        job_results.append(dict(result,job_id=job['job_id'],doc_ids=job['doc_ids']))
         year=job['month'][:4];years[year][result['status']]+=1
         if result['status']!='COMPLETE':
             blocked.append({'job_id':job['job_id'],'doc_ids':job['doc_ids'],'month':job['month'],'reason':result['reason']});continue
+        if not synthetic and not (folder/'evidence_manifest.json').is_file():raise ContractError('stage_evidence_manifest_missing')
         package=folder/'package';data=Dataset(package,codec=codec,allow_synthetic=synthetic)
         number=len(shards)
         entry={'number':number,'job_id':job['job_id'],'package':package.relative_to(root).as_posix(),
             'CURRENT_sha256':file_hash(package/'CURRENT.json'),'manifest_sha256':file_hash(data.path/'manifest.json'),
             'evidence_archive':(folder/'evidence.zip').relative_to(root).as_posix(),
             'evidence_sha256':result['artifacts']['evidence.zip'],'checkpoint':(folder/'result.json').relative_to(root).as_posix(),
+            'evidence_manifest':(folder/'evidence_manifest.json').relative_to(root).as_posix() if (folder/'evidence_manifest.json').exists() else None,
+            'evidence_manifest_sha256':file_hash(folder/'evidence_manifest.json') if (folder/'evidence_manifest.json').exists() else None,
             'checkpoint_sha256':file_hash(folder/'result.json'),'validation':data.verification,'coverage':data.index['coverage']}
         shards.append(entry)
         for name,rows in data.tables.items():
@@ -71,27 +235,32 @@ def publish_federation(root,snapshot,*,codec=None,synthetic=False):
             for row in rows:
                 key=table_key(name,row)
                 if len(key)!=1:raise ContractError('routing_key_not_scalar')
-                identifier=key[0];binary=identifier.encode()
-                if len(identifier)==64:
-                    try:binary=bytes.fromhex(identifier)
-                    except ValueError:pass
-                if name in ('documents','canonical_facts','pit_join_rows'):
-                    try:db.execute('INSERT INTO exclusive_ids VALUES (?,?)',(kind,binary))
-                    except sqlite3.IntegrityError:raise ContractError('duplicate_cross_partition_id:'+name) from None
-                db.execute('INSERT INTO locations VALUES (?,?,?)',(kind,binary,number))
+                table='exclusive_locations' if name in EXCLUSIVE else 'shared_locations'
+                try:db.execute('INSERT INTO '+table+' VALUES (?,?,?)',(kind,binary_key(key[0]),number))
+                except sqlite3.IntegrityError:raise ContractError('duplicate_cross_partition_id:'+name) from None
         for e in data.rows('entities'):
             entities[e['entity_id']]=merge_entity(entities[e['entity_id']],e) if e['entity_id'] in entities else e
             db.execute('INSERT INTO entity_shards VALUES (?,?)',(e['entity_id'],number))
         for d in data.rows('documents'):
             entity='edinet:'+d['edinet_code'] if d.get('edinet_code') else None
             db.execute('INSERT INTO documents VALUES (?,?,?)',(d['doc_id'],entity,number))
+            processed[d['doc_id']]={'job_id':job['job_id'],'document_failure':d.get('document_failure'),
+                'source_tied_facts':0,'canonical_eligible_facts':0,'pit_pass':0,'pit_blocked':0}
+        for f in data.rows('canonical_facts'):
+            if f.get('normalized_value') is not None and f.get('verification_state')=='source_tied':processed[f['doc_id']]['source_tied_facts']+=1
+        view=fact_view(data.rows('canonical_facts'),data.rows('documents'),mode='latest_restated',
+            snapshot_cutoff=datetime.fromisoformat(plan['created_at']),allow_synthetic_for_tests=synthetic)
+        for f in view['facts']:processed[f['doc_id']]['canonical_eligible_facts']+=1
+        for r in data.rows('pit_join_rows'):processed[r['doc_id']]['pit_pass' if r['status']=='PASS' else 'pit_blocked']+=1
         for r in data.rows('pit_join_rows'):states[r['status']]+=1;years[year]['PIT_'+r['status']]+=1
         db.commit()
     db.executemany('INSERT INTO entities VALUES (?,?)',[(k,encoded(v)) for k,v in sorted(entities.items())])
     # Occurrence counts are deliberately not mislabeled as unique upstream evidence.
-    counts={name:db.execute('SELECT COUNT(DISTINCT id) FROM locations WHERE kind=?',(ROUTED.index(name),)).fetchone()[0] for name in ROUTED}
+    counts={name:db.execute('SELECT COUNT(DISTINCT id) FROM '+('exclusive_locations' if name in EXCLUSIVE else 'shared_locations')+
+        ' WHERE kind=?',(ROUTED.index(name),)).fetchone()[0] for name in ROUTED}
     counts['entities']=len(entities)
     db.commit();db.close()
+    expansion=write_expansion_coverage(plan,out,processed,job_results) if not synthetic else {}
     summary={'snapshot_id':snapshot,'snapshot_cutoff':plan['created_at'],'contract_version':VERSION,
         'created_at':utcnow(),'code_sha':file_hash(Path(__file__)),'coverage_unique_ids':counts,'table_occurrences':dict(totals),
         'join_states':dict(states),'year_states':{k:dict(v) for k,v in sorted(years.items())},'complete_partitions':len(shards),
@@ -99,9 +268,12 @@ def publish_federation(root,snapshot,*,codec=None,synthetic=False):
         'rights_status':'BLOCKED','export_allowed':False,'full_market_representativeness':'NOT ESTABLISHED',
         'system_replay':'NOT ESTABLISHED','original_bytes_rechecked':'see input preservation proof',
         'query_policy':'full entity revision series across partitions; no name join or missing-value fallback',
-        'stage_content_resolution':'checkpoint -> evidence.zip -> stage snapshot/file/one-based line -> original hash/locator'}
+        'stage_content_resolution':'checkpoint -> evidence_manifest (ZIP member or verified package reconstruction) -> stage snapshot/file/line -> original',
+        **expansion}
     store.publish('coverage_summary.json',encoded(summary))
     store.publish('gap_ledger.jsonl',b''.join(encoded(r)+b'\n' for r in blocked+plan['blocked_documents']))
+    if gate:store.publish('acceptance_gate.json',encoded(gate))
+    if not synthetic:store.publish('source_catalog.json',encoded(source_catalog(plan)))
     # Chat views are existing shard CSVs, plus the global entity and filing indices in SQLite.
     manifest={'snapshot_id':snapshot,'contract_version':VERSION,'synthetic':synthetic,'shards':shards,
         'snapshot_cutoff':plan['created_at'],'plan_sha256':digest,'tables':list(TABLES),'rights_status':'BLOCKED','export_allowed':False,
@@ -140,11 +312,8 @@ class PartitionedDataset:
         return d
 
     def locate(self,table,key):
-        binary=key.encode()
-        if len(key)==64:
-            try:binary=bytes.fromhex(key)
-            except ValueError:pass
-        return [r[0] for r in self.db.execute('SELECT shard FROM locations WHERE kind=? AND id=? ORDER BY shard',(ROUTED.index(table),binary))]
+        source='exclusive_locations' if table in EXCLUSIVE else 'shared_locations'
+        return [r[0] for r in self.db.execute('SELECT shard FROM '+source+' WHERE kind=? AND id=? ORDER BY shard',(ROUTED.index(table),binary_key(key)))]
 
     def entity_shards(self,entity):
         return [r[0] for r in self.db.execute('SELECT shard FROM entity_shards WHERE entity=? ORDER BY shard',(entity,))]
@@ -178,13 +347,17 @@ class PartitionedDataset:
             for field,table in [('fact_id','canonical_facts'),('research_row_id','pit_join_rows'),('source_row_id','derived_source_rows'),('comparison_id','derived_source_links')]:
                 if args.get(field):
                     return {'occurrences':[{'partition':self.shards[n]['job_id'],'lineage':self.shard(n).query(command,**args),
-                        'private_stage_archive':self.shards[n]['evidence_archive']} for n in self.locate(table,args[field])],
+                        'private_stage_archive':self.shards[n]['evidence_archive'],
+                        'private_evidence_manifest':self.shards[n].get('evidence_manifest'),
+                        'evidence_manifest_sha256':self.shards[n].get('evidence_manifest_sha256')} for n in self.locate(table,args[field])],
                         'independent_evidence_increment':0,'original_bytes_rechecked':False}
         if command=='validate':
             results=[]
             for n,s in enumerate(self.shards):
                 d=self.shard(n)
                 if file_hash(safe_path(self.root,s['evidence_archive']))!=s['evidence_sha256']:raise ContractError('partition_evidence_changed')
+                if s.get('evidence_manifest') and file_hash(safe_path(self.root,s['evidence_manifest']))!=s['evidence_manifest_sha256']:
+                    raise ContractError('partition_evidence_manifest_changed')
                 results.append({'partition':s['job_id'],'validation':d.verification})
             return {'status':'PASS','partitions':results,'rights_status':'BLOCKED','export_allowed':False}
         raise ContractError('unknown_query')
