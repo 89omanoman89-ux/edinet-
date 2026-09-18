@@ -42,8 +42,12 @@ def compare_zip(data, row, artifact):
                     continue
                 xml = archive.read(info)
                 members.append(info.filename)
-                if b"<!DOCTYPE" in xml.upper() or b"<!ENTITY" in xml.upper():
-                    return gate("xml_entities_rejected")
+                # Also detect declarations in UTF-16/32 before invoking Expat.
+                declarations = xml.replace(b"\x00", b"").upper()
+                if b"<!DOCTYPE" in declarations:
+                    return gate("xml_doctype_rejected")
+                if b"<!ENTITY" in declarations:
+                    return gate("xml_entity_rejected")
                 for position, element in enumerate(ElementTree.fromstring(xml).iter()):
                     if element.tag.rsplit("}", 1)[-1] == row["tag"]:
                         original = "".join(element.itertext())

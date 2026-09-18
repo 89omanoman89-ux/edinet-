@@ -57,7 +57,7 @@ def tie_original(store, row, artifact):
     return compare_zip(store.read_raw(artifact), row, artifact)
 
 
-def run(private_dir, snapshot, edinet_day, secret_name=None, *, sample_year=SAMPLE_YEAR, stats=None,
+def run(private_dir, snapshot, edinet_day=None, secret_name=None, *, sample_year=SAMPLE_YEAR, stats=None,
         edinet_local_root=None):
     if sample_year not in (2014, 2022):
         raise ContractError("Only the fixed 2022 sample or 2014 historical negative case is supported")
@@ -88,6 +88,7 @@ def run(private_dir, snapshot, edinet_day, secret_name=None, *, sample_year=SAMP
     original = None
     selection, local_results = None, None
     retention = gate("sample_not_profiled")
+    day_check = gate("sample_not_profiled")
     if sample["status"] == "FETCHED":
         try:
             sample_row, profile = numad_sample(store.read_raw(sample))
@@ -106,6 +107,11 @@ def run(private_dir, snapshot, edinet_day, secret_name=None, *, sample_year=SAMP
                     artifact_sha256=sample["byte_sha256"], archive_root_id=local_archive.root_id))
                 local_results = audit_local(local_archive, sample_row, index)
             schema = gate(**profile)
+            submitted_day = sample_row["submit_date"]
+            day_check = gate(None if edinet_day is None or str(edinet_day) == submitted_day
+                             else "edinet_date_submit_date_mismatch",
+                             submit_date=submitted_day,
+                             requested_date=str(edinet_day) if edinet_day is not None else None)
             store.record("sample_bindings", {"artifact_sha256": sample["byte_sha256"],
                 "provider_version": NUMAD_COMMIT, "doc_id": sample_row["doc_id"],
                 "file": f"yuho-{sample_year}.jsonl", "locator": profile["sample_locator"],
@@ -114,7 +120,9 @@ def run(private_dir, snapshot, edinet_day, secret_name=None, *, sample_year=SAMP
             retention = retention_check(sample_row["submit_date"], datetime.now(JST).date())
             if reviewed_docs(spec, REVIEWED_SPEC)["status"] != "PASS":
                 retention = gate("retention_policy_review_required")
-            if retention["status"] == "BLOCKED" or sample_year == 2014:
+            if day_check["status"] == "BLOCKED":
+                tie = day_check
+            elif retention["status"] == "BLOCKED" or sample_year == 2014:
                 tie = gate(retention["reason"] or "historical_archive_only", retention=retention)
                 store.record("route_blocks", {"doc_id": sample_row["doc_id"], "snapshot": snapshot,
                                               "source_tied": tie, "http_attempted": False})
@@ -133,8 +141,12 @@ def run(private_dir, snapshot, edinet_day, secret_name=None, *, sample_year=SAMP
                 schema = gate("schema_mismatch")
             else:
                 tie = gate("original_integrity_or_contract_failure")
+    if day_check["status"] == "BLOCKED":
+        store.record("route_blocks", {"snapshot": snapshot, "date_check": day_check,
+                                      "http_attempted": False, "scope": "live_official_api"})
+        raise ContractError(day_check["reason"])
     official = client.fetch(Fetch("edinet_official",
-        f"https://api.edinet-fsa.go.jp/api/v2/documents.json?date={edinet_day}&type=2",
+        f"https://api.edinet-fsa.go.jp/api/v2/documents.json?date={day_check['submit_date']}&type=2",
         None, snapshot, TERMS, secret_name=secret_name or "EDINET_API_KEY", interface_version=API_SPEC_VERSION))
     official_schema = gate("metadata_not_fetched")
     official_tie = gate("filing_original_not_tied_to_metadata")
@@ -184,7 +196,7 @@ def run(private_dir, snapshot, edinet_day, secret_name=None, *, sample_year=SAMP
     return report
 
 
-def run_twice(private_dir, snapshot, edinet_day, secret_name=None, *, sample_year=SAMPLE_YEAR,
+def run_twice(private_dir, snapshot, edinet_day=None, secret_name=None, *, sample_year=SAMPLE_YEAR,
               edinet_local_root=None):
     """Verify actual cached bytes/manifests and counters; blocked routes stay blocked."""
     first_stats, second_stats = {}, {}
@@ -220,7 +232,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--private-dir", required=True)
     parser.add_argument("--snapshot", required=True)
-    parser.add_argument("--edinet-date", required=True, type=date.fromisoformat)
+    parser.add_argument("--edinet-date", type=date.fromisoformat,
+                        help="Optional; must match the selected sample's submit_date")
     parser.add_argument("--edinet-secret-env", help="Explicitly approved secret setting name, never its value")
     parser.add_argument("--sample-year", type=int, choices=(2014, 2022), default=SAMPLE_YEAR)
     parser.add_argument("--verify-resume", action="store_true", help="Run twice and record cache/integrity checks")
