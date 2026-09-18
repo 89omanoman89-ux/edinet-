@@ -115,7 +115,7 @@ class Fetch:
         out["terms_url"] = safe_uri(self.terms_url)
         if urlsplit(self.url).query != urlsplit(out["safe_url"]).query or urlsplit(self.url).fragment:
             raise ContractError("Only validated public query parameters allowed; use secret_getter for keys")
-        if not self.source_id or not self.snapshot or not 0 < self.max_bytes <= 16 * 1024 * 1024:
+        if not self.source_id or not self.snapshot or not 0 < self.max_bytes <= 256 * 1024 * 1024:
             raise ContractError("Invalid bounded request")
         if self.range_end is not None and not 0 <= self.range_end < self.max_bytes:
             raise ContractError("Invalid sample range")
