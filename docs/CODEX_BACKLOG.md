@@ -72,7 +72,16 @@ numad/CUC/詳細XBRLの本文、人的資本、投資内訳、株主/政策保�
 immutable snapshotのhash/row count/schema/lineageと入力保存を検査してからCURRENTだけを切り替える。
 公開Gitにはコード・仕様・合成テストのみ。Drive upload・新規金融値・return・研究評価は行わない。
 
+## P5.6 — 既存privateデータのcoverageと展開準備
+
+[棚卸し契約](P5_6.md)に従い、実bytes・実rowから2016〜2026のcoverageを測定する。
+欠損・UNKNOWNを残すpartition queueと、実行前固定の年跨ぎ標本を使う。
+既存定義・raw・snapshot・CURRENTは不変。全量財務処理や研究検証には進まない。
+
 ## P6 — 仮説・実験台帳と時間分割
+
+P6の前に、利用可能な既存private archiveの全量展開を[PRIVATE_EXPANSION.md](PRIVATE_EXPANSION.md)の
+入力hash・訂正系列・PIT・lineage・保存証明で受け入れる。全市場代表性や研究結果の検証とは別工程。
 
 registryの研究仕様を機械可読にし、全試行と状態遷移をappend-onlyで保存する。
 暦時点ベースwalk-forward、label成熟、重複窓purge、内側のモデル選択/校正を実装する。

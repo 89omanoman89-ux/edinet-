@@ -38,6 +38,13 @@ class ReadOnlyEvidence(LocalArchive):
         return {"status": "PASS", "files": before, "file_count": len(before)}
 
 
+def open_evidence(root, store, **kwargs):
+    if (Path(root) / 'cross_archive_index.json').is_file():
+        from expansion_archive import CrossArchive
+        return CrossArchive(root, store, **kwargs)
+    return ReadOnlyEvidence(root, store, **kwargs)
+
+
 def snapshot_fingerprints(root):
     result = {}
     for path in sorted(root.rglob("*")):

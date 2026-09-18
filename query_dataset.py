@@ -27,7 +27,7 @@ class Dataset:
 
     def facts(self, entity, as_of, replay='public_reconstruction'):
         decision=datetime.fromisoformat(as_of);aware(decision)
-        docs=[r for r in self.rows('documents') if 'edinet:'+r['edinet_code']==entity]
+        docs=[r for r in self.rows('documents') if r.get('edinet_code') and 'edinet:'+r['edinet_code']==entity]
         facts=[r for r in self.rows('canonical_facts') if 'edinet:'+r['edinet_code']==entity]
         if not docs: return {'facts':[], 'blocked':[{'reason':'entity_not_in_snapshot'}]}
         return fact_view(facts,docs,mode='as_of',decision_at=decision,
@@ -52,7 +52,7 @@ class Dataset:
         if command=='company': return {'rows':self.company(**{k:args.get(k) for k in ('code','name','entity')})}
         if command=='facts': return self.facts(args['entity'],args['as_of'],args.get('replay','public_reconstruction'))
         if command=='compare': return {'rows':[r for r in self.rows('derived_source_links') if r['doc_id']==args['doc_id']]}
-        if command=='filings': return {'rows':[r for r in self.rows('documents') if 'edinet:'+r['edinet_code']==args['entity']]}
+        if command=='filings': return {'rows':[r for r in self.rows('documents') if r.get('edinet_code') and 'edinet:'+r['edinet_code']==args['entity']]}
         if command=='joins': return {'rows':[r for r in self.rows('pit_join_rows') if r['entity_id']==args['entity']],
             'scope':'Stored audited decisions only; entry outcome is not a decision feature; includes BLOCKED'}
         if command=='lineage':
@@ -89,7 +89,13 @@ def main():
     sub.add_parser('validate');args=vars(p.parse_args())
     try:
         if not 1<=args['limit']<=1000 or args['offset']<0: raise ContractError('invalid_page')
-        dataset=Dataset(args['root']);result=dataset.query(**args)
+        from pathlib import Path
+        discovery=json.loads((Path(args['root'])/'dataset_index.json').read_bytes())
+        if discovery.get('contract_version')=='private-partitioned-query-v1':
+            from partitioned_dataset import PartitionedDataset
+            dataset=PartitionedDataset(args['root'])
+        else:dataset=Dataset(args['root'])
+        result=dataset.query(**args)
         totals={k:len(v) for k,v in result.items() if isinstance(v,list)}
         for k in totals: result[k]=result[k][args['offset']:args['offset']+args['limit']]
         print(json.dumps({'snapshot_id':dataset.index['snapshot_id'],'snapshot_cutoff':dataset.index['snapshot_cutoff'],

@@ -9,12 +9,12 @@ import re
 from dated_pit import (rules as dated_rules, edinet_identity_evidence, reconstruct_price, prepare_join,
                        join_dated_fact, execution_outcome, verify_dated_lineage)
 
-from evidence_core import ContractError
+from evidence_core import ContractError,JST
 from financial_facts import reverse_verify
 from financial_views import fact_view
 from jquants_local import JQuantsArchive, DATASETS
 from local_edinet import LocalArchive
-from metadata_gap_audit import ReadOnlyEvidence, snapshot_fingerprints
+from metadata_gap_audit import open_evidence, snapshot_fingerprints
 from pit_market import (DEFINITION, financial_observations, instant, join_fact,
                         price_observation, reconcile_sources)
 from source_acquisition import PrivateStore, encoded, sha256, utcnow
@@ -45,7 +45,13 @@ def identity_candidates(documents, masters, calendar):
     return output
 
 
-def run(jquants_root, edinet_root, p3_snapshot, private_dir, snapshot, *, synthetic=False, direct_dated=False):
+def calendar_in_scope(day,submission_days):
+    # Exact finite lookback/search bounds used by previous_session_day/entry_candidate.
+    return any((date.fromisoformat(d)-timedelta(days=15)).isoformat()<=day<=
+               (date.fromisoformat(d)+timedelta(days=14)).isoformat() for d in submission_days)
+
+
+def run(jquants_root, edinet_root, p3_snapshot, private_dir, snapshot, *, synthetic=False, direct_dated=False, row_cache=None,bounded_calendar=False):
     if not re.fullmatch(r"[A-Za-z0-9_-]+", snapshot): raise ContractError("invalid_snapshot_id")
     prior, output = Path(p3_snapshot).resolve(), (Path(private_dir) / snapshot).resolve()
     for source in (prior, Path(jquants_root).resolve(), Path(edinet_root).resolve()):
@@ -64,7 +70,7 @@ def run(jquants_root, edinet_root, p3_snapshot, private_dir, snapshot, *, synthe
     code_files = {n: sha256((Path(__file__).parent / n).read_text(encoding="utf-8").encode()) for n in
         ("p4_audit.py", "pit_market.py", "jquants_local.py", "financial_facts.py", "financial_views.py", "revision_series.py",
          "local_edinet.py", "metadata_gap_audit.py", "source_acquisition.py", "evidence_core.py", "registry/p4_contract_v1.json",
-         "dated_pit.py", "registry/p4_dated_rules_v1.json")}
+         "dated_pit.py", "registry/p4_dated_rules_v1.json", "expansion_archive.py", "expansion_sources.py")}
     now = utcnow()
     common = {"snapshot_id": snapshot, "p3_snapshot_id": p3_plan["snapshot_id"], "code_sha": sha256(encoded(code_files)),
               "definition_version": dated_rules()['definition_version'] if direct_dated else DEFINITION,
@@ -72,7 +78,10 @@ def run(jquants_root, edinet_root, p3_snapshot, private_dir, snapshot, *, synthe
     def save(name, value): store.publish(name, encoded(dict(common, **value)) + b"\n")
     def lines(name, values): store.publish(name, b"".join(encoded(dict(common, **x))+b"\n" for x in values))
     jq = JQuantsArchive(jquants_root, store, synthetic=synthetic)
-    archive = ReadOnlyEvidence(edinet_root, store, provenance_class="synthetic_fixture" if synthetic else "preexisting_local_official_archive")
+    if row_cache is not None:
+        from expansion_sources import CachedJQuants
+        jq=CachedJQuants(jquants_root,store,cache_root=row_cache,synthetic=synthetic)
+    archive = open_evidence(edinet_root, store, provenance_class="synthetic_fixture" if synthetic else "preexisting_local_official_archive")
     days = sorted({d["submit_datetime"][:10] for d in docs if d.get("submit_datetime")})
     if not days: raise ContractError("sample_submission_dates_missing")
     windows = {dataset: [((date.fromisoformat(day)-timedelta(days=370 if dataset == "fins_summary" else 10)).isoformat(),
@@ -83,15 +92,19 @@ def run(jquants_root, edinet_root, p3_snapshot, private_dir, snapshot, *, synthe
         "revision_support": p3_plan["revision_support"], "selection_rule": "all_frozen_P3_documents_no_success_reselection",
         "code_files": code_files, "p3_fingerprints": before, "jquants_plan": plan,
         "decision_rule": "one_microsecond_after_each_document_public_available_upper_bound", "direct_dated": direct_dated,
+        "calendar_scope":"decision_minus_15_through_plus_14" if bounded_calendar else "all_available",
         "replay": "public_reconstruction_not_system_replay", "entry_rule": "first_available_daily_session_after_disclosure_and_decision"})
     save("definitions.json", {"contract": dated_rules() if direct_dated else json.loads((Path(__file__).parent / "registry/p4_contract_v1.json").read_bytes())})
     channels = jq.bulk_channels(plan) if direct_dated else {}
     codes = {d["secCode"] for d in docs if d.get("secCode")}
+    if row_cache is not None:jq.query_codes=codes;jq.query_windows=windows
     profiles, observations, failures = [], [], []
+    decision_days=sorted({instant(d['public_available_at']).astimezone(JST).date().isoformat()
+                         for d in docs if d.get('public_available_at')})
     for f in plan["files"]:
         dataset = f["dataset"]
         def keep(r):
-            if dataset == "markets_calendar": return True
+            if dataset == "markets_calendar": return not bounded_calendar or calendar_in_scope(r['Date'],decision_days)
             day = r["DiscDate" if dataset == "fins_summary" else "Date"]
             return r["Code"] in codes and any(lo <= day <= hi for lo, hi in windows[dataset])
         try:
@@ -120,6 +133,8 @@ def run(jquants_root, edinet_root, p3_snapshot, private_dir, snapshot, *, synthe
         except ContractError as exc: failures.append({"stage": "observation", "observation_id": row["observation_id"], "reason": str(exc)})
     mappings = [] if direct_dated else identity_candidates(docs, masters, calendar)
     identities = edinet_identity_evidence(archive,docs) if direct_dated else []
+    if direct_dated and hasattr(archive,'identity_peers'):
+        identities.extend(archive.identity_peers(docs,synthetic=synthetic))
     identity_by_doc = {a['doc_id']:a for a in identities}
     jq_reverse = jq.verify_rows(observations)
     by_doc = defaultdict(list)

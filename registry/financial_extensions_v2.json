@@ -1,0 +1,991 @@
+{
+  "definition_version": "edinet-financial-v2",
+  "parent_definition_sha256": "24bb4fe65c1e3b1403055e22c8ae01d0a5180517b7cb998bb6d1761de2fb5597",
+  "fact_id_definition_version": "edinet-financial-v1",
+  "identity_policy": "Taxonomy allowlist extension only; existing source candidate and rule semantic identity unchanged",
+  "extensions": [
+    {
+      "rule_id": "jppfs.NetSales",
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2016-02-29/jppfs_cor}NetSales",
+      "schema_element": {
+        "name": "NetSales",
+        "id": "jppfs_cor_NetSales",
+        "type": "xbrli:monetaryItemType",
+        "substitutionGroup": "xbrli:item",
+        "abstract": "false",
+        "nillable": "true",
+        "{http://www.xbrl.org/2003/instance}balance": "credit",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      },
+      "review_scope": "Exact standard element, official schema type/period, official label and original element/context; existing metric/scope/unit semantics unchanged"
+    },
+    {
+      "rule_id": "jppfs.OperatingIncome",
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2016-02-29/jppfs_cor}OperatingIncome",
+      "schema_element": {
+        "name": "OperatingIncome",
+        "id": "jppfs_cor_OperatingIncome",
+        "type": "xbrli:monetaryItemType",
+        "substitutionGroup": "xbrli:item",
+        "abstract": "false",
+        "nillable": "true",
+        "{http://www.xbrl.org/2003/instance}balance": "credit",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      },
+      "review_scope": "Exact standard element, official schema type/period, official label and original element/context; existing metric/scope/unit semantics unchanged"
+    },
+    {
+      "rule_id": "jppfs.ProfitLoss",
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2016-02-29/jppfs_cor}ProfitLoss",
+      "schema_element": {
+        "name": "ProfitLoss",
+        "id": "jppfs_cor_ProfitLoss",
+        "type": "xbrli:monetaryItemType",
+        "substitutionGroup": "xbrli:item",
+        "abstract": "false",
+        "nillable": "true",
+        "{http://www.xbrl.org/2003/instance}balance": "credit",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      },
+      "review_scope": "Exact standard element, official schema type/period, official label and original element/context; existing metric/scope/unit semantics unchanged"
+    },
+    {
+      "rule_id": "jppfs.ProfitLossAttributableToOwnersOfParent",
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2016-02-29/jppfs_cor}ProfitLossAttributableToOwnersOfParent",
+      "schema_element": {
+        "name": "ProfitLossAttributableToOwnersOfParent",
+        "id": "jppfs_cor_ProfitLossAttributableToOwnersOfParent",
+        "type": "xbrli:monetaryItemType",
+        "substitutionGroup": "xbrli:item",
+        "abstract": "false",
+        "nillable": "true",
+        "{http://www.xbrl.org/2003/instance}balance": "credit",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      },
+      "review_scope": "Exact standard element, official schema type/period, official label and original element/context; existing metric/scope/unit semantics unchanged"
+    },
+    {
+      "rule_id": "jppfs.Assets",
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2016-02-29/jppfs_cor}Assets",
+      "schema_element": {
+        "name": "Assets",
+        "id": "jppfs_cor_Assets",
+        "type": "xbrli:monetaryItemType",
+        "substitutionGroup": "xbrli:item",
+        "abstract": "false",
+        "nillable": "true",
+        "{http://www.xbrl.org/2003/instance}balance": "debit",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      },
+      "review_scope": "Exact standard element, official schema type/period, official label and original element/context; existing metric/scope/unit semantics unchanged"
+    },
+    {
+      "rule_id": "jppfs.NetAssets",
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2016-02-29/jppfs_cor}NetAssets",
+      "schema_element": {
+        "name": "NetAssets",
+        "id": "jppfs_cor_NetAssets",
+        "type": "xbrli:monetaryItemType",
+        "substitutionGroup": "xbrli:item",
+        "abstract": "false",
+        "nillable": "true",
+        "{http://www.xbrl.org/2003/instance}balance": "credit",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      },
+      "review_scope": "Exact standard element, official schema type/period, official label and original element/context; existing metric/scope/unit semantics unchanged"
+    },
+    {
+      "rule_id": "jppfs.ShareholdersEquity",
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2016-02-29/jppfs_cor}ShareholdersEquity",
+      "schema_element": {
+        "name": "ShareholdersEquity",
+        "id": "jppfs_cor_ShareholdersEquity",
+        "type": "xbrli:monetaryItemType",
+        "substitutionGroup": "xbrli:item",
+        "abstract": "false",
+        "nillable": "true",
+        "{http://www.xbrl.org/2003/instance}balance": "credit",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      },
+      "review_scope": "Exact standard element, official schema type/period, official label and original element/context; existing metric/scope/unit semantics unchanged"
+    },
+    {
+      "rule_id": "jppfs.NetCashProvidedByUsedInOperatingActivities",
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2016-02-29/jppfs_cor}NetCashProvidedByUsedInOperatingActivities",
+      "schema_element": {
+        "name": "NetCashProvidedByUsedInOperatingActivities",
+        "id": "jppfs_cor_NetCashProvidedByUsedInOperatingActivities",
+        "type": "xbrli:monetaryItemType",
+        "substitutionGroup": "xbrli:item",
+        "abstract": "false",
+        "nillable": "true",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      },
+      "review_scope": "Exact standard element, official schema type/period, official label and original element/context; existing metric/scope/unit semantics unchanged"
+    },
+    {
+      "rule_id": "jppfs.NetCashProvidedByUsedInInvestmentActivities",
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2016-02-29/jppfs_cor}NetCashProvidedByUsedInInvestmentActivities",
+      "schema_element": {
+        "name": "NetCashProvidedByUsedInInvestmentActivities",
+        "id": "jppfs_cor_NetCashProvidedByUsedInInvestmentActivities",
+        "type": "xbrli:monetaryItemType",
+        "substitutionGroup": "xbrli:item",
+        "abstract": "false",
+        "nillable": "true",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      },
+      "review_scope": "Exact standard element, official schema type/period, official label and original element/context; existing metric/scope/unit semantics unchanged"
+    },
+    {
+      "rule_id": "jpcrp.NetSalesSummaryOfBusinessResults",
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2016-02-29/jpcrp_cor}NetSalesSummaryOfBusinessResults",
+      "schema_element": {
+        "name": "NetSalesSummaryOfBusinessResults",
+        "id": "jpcrp_cor_NetSalesSummaryOfBusinessResults",
+        "type": "xbrli:monetaryItemType",
+        "substitutionGroup": "xbrli:item",
+        "abstract": "false",
+        "nillable": "true",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      },
+      "review_scope": "Exact standard element, official schema type/period, official label and original element/context; existing metric/scope/unit semantics unchanged"
+    },
+    {
+      "rule_id": "jpcrp.NetIncomeLossSummaryOfBusinessResults",
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2016-02-29/jpcrp_cor}NetIncomeLossSummaryOfBusinessResults",
+      "schema_element": {
+        "name": "NetIncomeLossSummaryOfBusinessResults",
+        "id": "jpcrp_cor_NetIncomeLossSummaryOfBusinessResults",
+        "type": "xbrli:monetaryItemType",
+        "substitutionGroup": "xbrli:item",
+        "abstract": "false",
+        "nillable": "true",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      },
+      "review_scope": "Exact standard element, official schema type/period, official label and original element/context; existing metric/scope/unit semantics unchanged"
+    },
+    {
+      "rule_id": "jpcrp.ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults",
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2016-02-29/jpcrp_cor}ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults",
+      "schema_element": {
+        "name": "ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults",
+        "id": "jpcrp_cor_ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults",
+        "type": "xbrli:monetaryItemType",
+        "substitutionGroup": "xbrli:item",
+        "abstract": "false",
+        "nillable": "true",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      },
+      "review_scope": "Exact standard element, official schema type/period, official label and original element/context; existing metric/scope/unit semantics unchanged"
+    },
+    {
+      "rule_id": "jpcrp.TotalAssetsSummaryOfBusinessResults",
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2016-02-29/jpcrp_cor}TotalAssetsSummaryOfBusinessResults",
+      "schema_element": {
+        "name": "TotalAssetsSummaryOfBusinessResults",
+        "id": "jpcrp_cor_TotalAssetsSummaryOfBusinessResults",
+        "type": "xbrli:monetaryItemType",
+        "substitutionGroup": "xbrli:item",
+        "abstract": "false",
+        "nillable": "true",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      },
+      "review_scope": "Exact standard element, official schema type/period, official label and original element/context; existing metric/scope/unit semantics unchanged"
+    },
+    {
+      "rule_id": "jpcrp.NetAssetsSummaryOfBusinessResults",
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2016-02-29/jpcrp_cor}NetAssetsSummaryOfBusinessResults",
+      "schema_element": {
+        "name": "NetAssetsSummaryOfBusinessResults",
+        "id": "jpcrp_cor_NetAssetsSummaryOfBusinessResults",
+        "type": "xbrli:monetaryItemType",
+        "substitutionGroup": "xbrli:item",
+        "abstract": "false",
+        "nillable": "true",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      },
+      "review_scope": "Exact standard element, official schema type/period, official label and original element/context; existing metric/scope/unit semantics unchanged"
+    },
+    {
+      "rule_id": "jpcrp.NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults",
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2016-02-29/jpcrp_cor}NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults",
+      "schema_element": {
+        "name": "NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults",
+        "id": "jpcrp_cor_NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults",
+        "type": "xbrli:monetaryItemType",
+        "substitutionGroup": "xbrli:item",
+        "abstract": "false",
+        "nillable": "true",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      },
+      "review_scope": "Exact standard element, official schema type/period, official label and original element/context; existing metric/scope/unit semantics unchanged"
+    },
+    {
+      "rule_id": "jpcrp.NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults",
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2016-02-29/jpcrp_cor}NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults",
+      "schema_element": {
+        "name": "NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults",
+        "id": "jpcrp_cor_NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults",
+        "type": "xbrli:monetaryItemType",
+        "substitutionGroup": "xbrli:item",
+        "abstract": "false",
+        "nillable": "true",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      },
+      "review_scope": "Exact standard element, official schema type/period, official label and original element/context; existing metric/scope/unit semantics unchanged"
+    },
+    {
+      "rule_id": "jpcrp.TotalNumberOfIssuedSharesSummaryOfBusinessResults",
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2016-02-29/jpcrp_cor}TotalNumberOfIssuedSharesSummaryOfBusinessResults",
+      "schema_element": {
+        "name": "TotalNumberOfIssuedSharesSummaryOfBusinessResults",
+        "id": "jpcrp_cor_TotalNumberOfIssuedSharesSummaryOfBusinessResults",
+        "type": "xbrli:sharesItemType",
+        "substitutionGroup": "xbrli:item",
+        "abstract": "false",
+        "nillable": "true",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      },
+      "review_scope": "Exact standard element, official schema type/period, official label and original element/context; existing metric/scope/unit semantics unchanged"
+    },
+    {
+      "rule_id": "jpcrp.BasicEarningsLossPerShareSummaryOfBusinessResults",
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2016-02-29/jpcrp_cor}BasicEarningsLossPerShareSummaryOfBusinessResults",
+      "schema_element": {
+        "name": "BasicEarningsLossPerShareSummaryOfBusinessResults",
+        "id": "jpcrp_cor_BasicEarningsLossPerShareSummaryOfBusinessResults",
+        "type": "num:perShareItemType",
+        "substitutionGroup": "xbrli:item",
+        "abstract": "false",
+        "nillable": "true",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      },
+      "review_scope": "Exact standard element, official schema type/period, official label and original element/context; existing metric/scope/unit semantics unchanged"
+    },
+    {
+      "rule_id": "jpcrp.NetAssetsPerShareSummaryOfBusinessResults",
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2016-02-29/jpcrp_cor}NetAssetsPerShareSummaryOfBusinessResults",
+      "schema_element": {
+        "name": "NetAssetsPerShareSummaryOfBusinessResults",
+        "id": "jpcrp_cor_NetAssetsPerShareSummaryOfBusinessResults",
+        "type": "num:perShareItemType",
+        "substitutionGroup": "xbrli:item",
+        "abstract": "false",
+        "nillable": "true",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      },
+      "review_scope": "Exact standard element, official schema type/period, official label and original element/context; existing metric/scope/unit semantics unchanged"
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2024-11-01/jppfs_cor}NetSales",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jppfs.NetSales",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jppfs_cor_NetSales",
+        "name": "NetSales",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}balance": "credit",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2024-11-01/jppfs_cor}OperatingIncome",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jppfs.OperatingIncome",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jppfs_cor_OperatingIncome",
+        "name": "OperatingIncome",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}balance": "credit",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2024-11-01/jppfs_cor}ProfitLoss",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jppfs.ProfitLoss",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jppfs_cor_ProfitLoss",
+        "name": "ProfitLoss",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}balance": "credit",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2024-11-01/jppfs_cor}ProfitLossAttributableToOwnersOfParent",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jppfs.ProfitLossAttributableToOwnersOfParent",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jppfs_cor_ProfitLossAttributableToOwnersOfParent",
+        "name": "ProfitLossAttributableToOwnersOfParent",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}balance": "credit",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2024-11-01/jppfs_cor}Assets",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jppfs.Assets",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jppfs_cor_Assets",
+        "name": "Assets",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}balance": "debit",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2024-11-01/jppfs_cor}NetAssets",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jppfs.NetAssets",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jppfs_cor_NetAssets",
+        "name": "NetAssets",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}balance": "credit",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2024-11-01/jppfs_cor}ShareholdersEquity",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jppfs.ShareholdersEquity",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jppfs_cor_ShareholdersEquity",
+        "name": "ShareholdersEquity",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}balance": "credit",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2024-11-01/jppfs_cor}NetCashProvidedByUsedInOperatingActivities",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jppfs.NetCashProvidedByUsedInOperatingActivities",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jppfs_cor_NetCashProvidedByUsedInOperatingActivities",
+        "name": "NetCashProvidedByUsedInOperatingActivities",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2024-11-01/jppfs_cor}NetCashProvidedByUsedInInvestmentActivities",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jppfs.NetCashProvidedByUsedInInvestmentActivities",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jppfs_cor_NetCashProvidedByUsedInInvestmentActivities",
+        "name": "NetCashProvidedByUsedInInvestmentActivities",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2024-11-01/jpcrp_cor}NetSalesSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.NetSalesSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_NetSalesSummaryOfBusinessResults",
+        "name": "NetSalesSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2024-11-01/jpcrp_cor}NetIncomeLossSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.NetIncomeLossSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_NetIncomeLossSummaryOfBusinessResults",
+        "name": "NetIncomeLossSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2024-11-01/jpcrp_cor}ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults",
+        "name": "ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2024-11-01/jpcrp_cor}TotalAssetsSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.TotalAssetsSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_TotalAssetsSummaryOfBusinessResults",
+        "name": "TotalAssetsSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2024-11-01/jpcrp_cor}NetAssetsSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.NetAssetsSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_NetAssetsSummaryOfBusinessResults",
+        "name": "NetAssetsSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2024-11-01/jpcrp_cor}NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults",
+        "name": "NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2024-11-01/jpcrp_cor}NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults",
+        "name": "NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2024-11-01/jpcrp_cor}TotalNumberOfIssuedSharesSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.TotalNumberOfIssuedSharesSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_TotalNumberOfIssuedSharesSummaryOfBusinessResults",
+        "name": "TotalNumberOfIssuedSharesSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:sharesItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2024-11-01/jpcrp_cor}BasicEarningsLossPerShareSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.BasicEarningsLossPerShareSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_BasicEarningsLossPerShareSummaryOfBusinessResults",
+        "name": "BasicEarningsLossPerShareSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "num:perShareItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2024-11-01/jpcrp_cor}NetAssetsPerShareSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.NetAssetsPerShareSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_NetAssetsPerShareSummaryOfBusinessResults",
+        "name": "NetAssetsPerShareSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "num:perShareItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2025-11-01/jppfs_cor}OperatingIncome",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jppfs.OperatingIncome",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jppfs_cor_OperatingIncome",
+        "name": "OperatingIncome",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}balance": "credit",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2025-11-01/jppfs_cor}ProfitLoss",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jppfs.ProfitLoss",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jppfs_cor_ProfitLoss",
+        "name": "ProfitLoss",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}balance": "credit",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2025-11-01/jppfs_cor}Assets",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jppfs.Assets",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jppfs_cor_Assets",
+        "name": "Assets",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}balance": "debit",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2025-11-01/jppfs_cor}NetAssets",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jppfs.NetAssets",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jppfs_cor_NetAssets",
+        "name": "NetAssets",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}balance": "credit",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2025-11-01/jppfs_cor}ShareholdersEquity",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jppfs.ShareholdersEquity",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jppfs_cor_ShareholdersEquity",
+        "name": "ShareholdersEquity",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}balance": "credit",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2025-11-01/jpcrp_cor}NetIncomeLossSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.NetIncomeLossSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_NetIncomeLossSummaryOfBusinessResults",
+        "name": "NetIncomeLossSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2025-11-01/jpcrp_cor}ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults",
+        "name": "ProfitLossAttributableToOwnersOfParentSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2025-11-01/jpcrp_cor}ProfitLossAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.ProfitLossAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_ProfitLossAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+        "name": "ProfitLossAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2025-11-01/jpcrp_cor}TotalAssetsSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.TotalAssetsSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_TotalAssetsSummaryOfBusinessResults",
+        "name": "TotalAssetsSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2025-11-01/jpcrp_cor}TotalAssetsIFRSSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.TotalAssetsIFRSSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_TotalAssetsIFRSSummaryOfBusinessResults",
+        "name": "TotalAssetsIFRSSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2025-11-01/jpcrp_cor}NetAssetsSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.NetAssetsSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_NetAssetsSummaryOfBusinessResults",
+        "name": "NetAssetsSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2025-11-01/jpcrp_cor}EquityAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.EquityAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_EquityAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+        "name": "EquityAttributableToOwnersOfParentIFRSSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2025-11-01/jpcrp_cor}NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults",
+        "name": "NetCashProvidedByUsedInOperatingActivitiesSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2025-11-01/jpcrp_cor}CashFlowsFromUsedInOperatingActivitiesIFRSSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.CashFlowsFromUsedInOperatingActivitiesIFRSSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_CashFlowsFromUsedInOperatingActivitiesIFRSSummaryOfBusinessResults",
+        "name": "CashFlowsFromUsedInOperatingActivitiesIFRSSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2025-11-01/jpcrp_cor}NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults",
+        "name": "NetCashProvidedByUsedInInvestingActivitiesSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2025-11-01/jpcrp_cor}CashFlowsFromUsedInInvestingActivitiesIFRSSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.CashFlowsFromUsedInInvestingActivitiesIFRSSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_CashFlowsFromUsedInInvestingActivitiesIFRSSummaryOfBusinessResults",
+        "name": "CashFlowsFromUsedInInvestingActivitiesIFRSSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2025-11-01/jpcrp_cor}TotalNumberOfIssuedSharesSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.TotalNumberOfIssuedSharesSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_TotalNumberOfIssuedSharesSummaryOfBusinessResults",
+        "name": "TotalNumberOfIssuedSharesSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:sharesItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2025-11-01/jpcrp_cor}BasicEarningsLossPerShareSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.BasicEarningsLossPerShareSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_BasicEarningsLossPerShareSummaryOfBusinessResults",
+        "name": "BasicEarningsLossPerShareSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "num:perShareItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2025-11-01/jpcrp_cor}BasicEarningsLossPerShareIFRSSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.BasicEarningsLossPerShareIFRSSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_BasicEarningsLossPerShareIFRSSummaryOfBusinessResults",
+        "name": "BasicEarningsLossPerShareIFRSSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "num:perShareItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2025-11-01/jpcrp_cor}NetAssetsPerShareSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.NetAssetsPerShareSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_NetAssetsPerShareSummaryOfBusinessResults",
+        "name": "NetAssetsPerShareSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "num:perShareItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2025-11-01/jpcrp_cor}EquityToAssetRatioIFRSSummaryOfBusinessResults",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpcrp.EquityToAssetRatioIFRSSummaryOfBusinessResults",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpcrp_cor_EquityToAssetRatioIFRSSummaryOfBusinessResults",
+        "name": "EquityToAssetRatioIFRSSummaryOfBusinessResults",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "num:perShareItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2025-11-01/jpigp_cor}ProfitLossIFRS",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpigp.ProfitLossIFRS",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpigp_cor_ProfitLossIFRS",
+        "name": "ProfitLossIFRS",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}balance": "credit",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2025-11-01/jpigp_cor}AssetsIFRS",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpigp.AssetsIFRS",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpigp_cor_AssetsIFRS",
+        "name": "AssetsIFRS",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}balance": "debit",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2025-11-01/jpigp_cor}EquityIFRS",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpigp.EquityIFRS",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpigp_cor_EquityIFRS",
+        "name": "EquityIFRS",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}balance": "credit",
+        "{http://www.xbrl.org/2003/instance}periodType": "instant"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2025-11-01/jpigp_cor}NetCashProvidedByUsedInOperatingActivitiesIFRS",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpigp.NetCashProvidedByUsedInOperatingActivitiesIFRS",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpigp_cor_NetCashProvidedByUsedInOperatingActivitiesIFRS",
+        "name": "NetCashProvidedByUsedInOperatingActivitiesIFRS",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    },
+    {
+      "accepted_qname": "{http://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2025-11-01/jpigp_cor}NetCashProvidedByUsedInInvestingActivitiesIFRS",
+      "review_scope": "Exact standard element, official schema type/period, official Japanese label and original element/context; existing metric/scope/unit semantics unchanged",
+      "rule_id": "jpigp.NetCashProvidedByUsedInInvestingActivitiesIFRS",
+      "schema_element": {
+        "abstract": "false",
+        "id": "jpigp_cor_NetCashProvidedByUsedInInvestingActivitiesIFRS",
+        "name": "NetCashProvidedByUsedInInvestingActivitiesIFRS",
+        "nillable": "true",
+        "substitutionGroup": "xbrli:item",
+        "type": "xbrli:monetaryItemType",
+        "{http://www.xbrl.org/2003/instance}periodType": "duration"
+      }
+    }
+  ],
+  "taxonomy_sources": [
+    {
+      "byte_sha256": "2d5fac143d30fbbab76a9ed63ef1e207fe4f73b281a27df65927d93db7c70cae",
+      "label_member_sha256": "05010b47b88ff0c50e3f78d297176c6876667ac97b9153c2875d3f7daf1a5085",
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2016-02-29/jppfs_cor",
+      "release_url": "https://www.fsa.go.jp/search/20160314.html",
+      "release_zip_sha256": "b208bd557eeee800aa6f958d367bda6b419cac211b0f8c3f6464b6f23ade45d8",
+      "release_zip_url": "https://www.fsa.go.jp/search/20160314/1c.zip",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2016-02-29/jppfs_cor_2016-02-29.xsd"
+    },
+    {
+      "byte_sha256": "192d7920fd1782d4134f379fcbf395cd93b25a99218861dcaf1b9df7fdf1df1d",
+      "label_member_sha256": "80ee4d27c840f6db7394514efea4f839cf735748e0653d8e895b861d6631bcb7",
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2016-02-29/jpcrp_cor",
+      "release_url": "https://www.fsa.go.jp/search/20160314.html",
+      "release_zip_sha256": "b208bd557eeee800aa6f958d367bda6b419cac211b0f8c3f6464b6f23ade45d8",
+      "release_zip_url": "https://www.fsa.go.jp/search/20160314/1c.zip",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2016-02-29/jpcrp_cor_2016-02-29.xsd"
+    },
+    {
+      "byte_sha256": "b2afddc1efd4046e5e62c9dfce493882d14a0158c8e040343f20a8f6f362f877",
+      "label_member_sha256": "be38f4ad61a9e29e7a764e994fa42fff59513e1744c210d8152fe530b206a211",
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2024-11-01/jppfs_cor",
+      "release_url": "https://www.fsa.go.jp/search/20241112.html",
+      "release_zip_sha256": "70abacbac7b9d897dc794faadb4a2be46775f618ab79a8888622847a4d62ae90",
+      "release_zip_url": "https://www.fsa.go.jp/search/20241112/1c_Taxonomy.zip",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2024-11-01/jppfs_cor_2024-11-01.xsd"
+    },
+    {
+      "byte_sha256": "1a8541752230519e877489caeef5aa455b0c3e6af81eb4d994aad40ff6d6f05a",
+      "label_member_sha256": "11cde996a2501f0886f968f4cf296e78058d1e0dbebdbd2020733a8da531ffde",
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2024-11-01/jpcrp_cor",
+      "release_url": "https://www.fsa.go.jp/search/20241112.html",
+      "release_zip_sha256": "70abacbac7b9d897dc794faadb4a2be46775f618ab79a8888622847a4d62ae90",
+      "release_zip_url": "https://www.fsa.go.jp/search/20241112/1c_Taxonomy.zip",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2024-11-01/jpcrp_cor_2024-11-01.xsd"
+    },
+    {
+      "byte_sha256": "7383f7d439a2c0f168e9df988db3d7c63175af61f4869906d4c4a7518e8d9ab7",
+      "label_member_sha256": "bf56ea1585afe426b398a9053ec4de4dbeafc211a53675b5d6d19453e4e04bf4",
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2025-11-01/jppfs_cor",
+      "release_url": "https://www.fsa.go.jp/search/20251111.html",
+      "release_zip_sha256": "8d57f84802b20a8dc6a517ad6d4768270c294aa6991621d66cb5adb562df5de2",
+      "release_zip_url": "https://www.fsa.go.jp/search/20251111/1c_Taxonomy.zip",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jppfs/2025-11-01/jppfs_cor_2025-11-01.xsd"
+    },
+    {
+      "byte_sha256": "5c7739d08628424c67e3e85a894b8dcb3cf352060ce37affdd65b7d3ad252bf9",
+      "label_member_sha256": "df9c23764ec9a63cb65b5ef62e79a2907c590523797421442ea2a60e334cd684",
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2025-11-01/jpcrp_cor",
+      "release_url": "https://www.fsa.go.jp/search/20251111.html",
+      "release_zip_sha256": "8d57f84802b20a8dc6a517ad6d4768270c294aa6991621d66cb5adb562df5de2",
+      "release_zip_url": "https://www.fsa.go.jp/search/20251111/1c_Taxonomy.zip",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jpcrp/2025-11-01/jpcrp_cor_2025-11-01.xsd"
+    },
+    {
+      "byte_sha256": "fab9e3cc648d88afff9ef7b9163da3dc955bdcd02e71b476002233399ffa1bca",
+      "label_member_sha256": "d45c95cc634202973557f5ed935d747ba25e751b7386c5269fe3e7bdb2c82d09",
+      "namespace": "http://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2025-11-01/jpigp_cor",
+      "release_url": "https://www.fsa.go.jp/search/20251111.html",
+      "release_zip_sha256": "8d57f84802b20a8dc6a517ad6d4768270c294aa6991621d66cb5adb562df5de2",
+      "release_zip_url": "https://www.fsa.go.jp/search/20251111/1c_Taxonomy.zip",
+      "schema_url": "https://disclosure.edinet-fsa.go.jp/taxonomy/jpigp/2025-11-01/jpigp_cor_2025-11-01.xsd"
+    }
+  ]
+}

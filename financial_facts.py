@@ -20,7 +20,22 @@ MAX_EXPANDED = 32 * 1024 * 1024
 
 
 def definitions():
-    return json.loads((Path(__file__).parent / "registry/financial_definitions_v1.json").read_bytes())
+    base=Path(__file__).parent / 'registry'
+    config=json.loads((base/'financial_definitions_v1.json').read_bytes())
+    extension=json.loads((base/'financial_extensions_v2.json').read_bytes())
+    if sha256(encoded(config))!=extension['parent_definition_sha256']:
+        raise ContractError('mapping_extension_parent_mismatch')
+    rules={r['rule_id']:r for r in config['rules']}
+    for addition in extension['extensions']:
+        rule=rules[addition['rule_id']]
+        q=addition['accepted_qname']
+        if q in rule['accepted_qnames']:raise ContractError('duplicate_mapping_extension')
+        rule['accepted_qnames'].append(q)
+    config['taxonomy_sources'].extend(extension['taxonomy_sources'])
+    config['definition_version']=extension['definition_version']
+    config['fact_id_definition_version']=extension['fact_id_definition_version']
+    config['extension_sha256']=sha256(encoded(extension))
+    return config
 
 
 def timestamp(value):
@@ -257,7 +272,7 @@ def canonicalize(candidates, config):
     rows = []
     for c in candidates:
         if c["rule_id"] is None: continue
-        f = dict(c, fact_id=sha256(encoded([c["candidate_id"], config["definition_version"], c["rule_id"]])))
+        f = dict(c, fact_id=sha256(encoded([c["candidate_id"], config.get('fact_id_definition_version',config["definition_version"]), c["rule_id"]])))
         rows.append(f)
     return rows
 

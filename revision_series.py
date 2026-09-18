@@ -11,8 +11,26 @@ from source_acquisition import encoded, sha256
 NON_ANNUAL_TYPES = set("010 020 030 040 050 060 070 080 090 100 110 135 136 140 150 160 170 180 190 200 210 220 230 235 236 240 250 260 270 280 290 300 310 320 330 340 350 360 370 380".split())
 
 
+def revision_closure(primary, nodes, children, limit=300):
+    """Same parent/child policy for directory scans and indexed multi-archive inputs."""
+    selected, queue, excluded = set(primary), list(primary), set()
+    while queue:
+        doc = queue.pop()
+        neighbours = {v[0] for v in nodes.get(doc, ()) if v[0]}
+        for child in children.get(doc, ()):
+            types = {v[2] for v in nodes[child]}
+            if len(types) != 1 or not types <= NON_ANNUAL_TYPES:
+                neighbours.add(child)
+            else: excluded.add((doc, child, tuple(sorted(types))))
+        for linked in sorted(neighbours - selected): selected.add(linked); queue.append(linked)
+        if len(selected) > limit: raise ContractError("revision_closure_budget_exceeded")
+    return selected, excluded
+
+
 def inventory_series(archive, selection, frozen_frame, frozen_manifest, limit=300):
     """Scan daily metadata, including IDs with no ZIP. Freeze closure before extraction."""
+    if hasattr(archive, 'indexed_series'):
+        return archive.indexed_series(selection, frozen_frame, frozen_manifest, limit)
     primary = selection["challenge"] + selection["probability"]
     if not primary or len(primary) != len(set(primary)):
         raise ContractError("invalid_primary_selection")
@@ -45,19 +63,7 @@ def inventory_series(archive, selection, frozen_frame, frozen_manifest, limit=30
         failures.append({"relative_path": missing, "reason": "metadata_file_missing"})
     if not listings: failures.append({"reason": "daily_metadata_not_available"})
 
-    selected, queue, excluded = set(primary), list(primary), set()
-    while queue:
-        doc = queue.pop()
-        neighbours = {v[0] for v in nodes.get(doc, ()) if v[0]}
-        for child in children.get(doc, ()):
-            types = {v[2] for v in nodes[child]}
-            # 130 is an amended annual report. Confirmation (135), etc. is not a revision.
-            # Missing/conflicting types are included so the auditor can block them explicitly.
-            if len(types) != 1 or not types <= NON_ANNUAL_TYPES:
-                neighbours.add(child)
-            else: excluded.add((doc, child, tuple(sorted(types))))
-        for linked in sorted(neighbours - selected): selected.add(linked); queue.append(linked)
-        if len(selected) > limit: raise ContractError("revision_closure_budget_exceeded")
+    selected, excluded = revision_closure(primary, nodes, children, limit)
 
     records = {d: {"doc_id": d, "zip_files": [], "metadata_events": []} for d in selected}
     relevant_files = set().union(*(locations.get(d, set()) for d in selected))
