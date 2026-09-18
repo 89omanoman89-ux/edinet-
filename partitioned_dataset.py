@@ -8,10 +8,11 @@ from datetime import datetime
 import json
 import gzip
 from pathlib import Path
+import re
 import sqlite3
 
 from coverage_inventory import private_path,file_hash
-from dataset_contract import TABLES,payload,safe_path
+from dataset_contract import TABLES,payload,safe_path,catalog
 from dataset_validation import table_key
 from evidence_core import ContractError,aware
 from expansion_runner import validate_checkpoint
@@ -188,6 +189,7 @@ def merge_entity(existing,incoming):
 
 
 def publish_federation(root,snapshot,*,codec=None,synthetic=False):
+    if not re.fullmatch(r'[A-Za-z0-9_-]+',snapshot):raise ContractError('invalid_snapshot_id')
     root=private_path(root);plan_raw=(root/'expansion_plan.json').read_bytes();plan=json.loads(plan_raw)
     gate=None
     if not synthetic:
@@ -281,23 +283,33 @@ def publish_federation(root,snapshot,*,codec=None,synthetic=False):
         'snapshot_cutoff':plan['created_at'],'plan_sha256':digest,'tables':list(TABLES),'rights_status':'BLOCKED','export_allowed':False,
         'artifacts':{p.relative_to(root).as_posix():{'sha256':file_hash(p),'byte_count':p.stat().st_size} for p in out.iterdir() if p.is_file()}}
     store.publish('manifest.json',encoded(manifest))
-    index={'contract_version':VERSION,'CURRENT_snapshot':{'pointer':'CURRENT.json'},'tables':list(TABLES),
+    tables=catalog()
+    for spec in tables.values():spec['path_base']='each manifest.shards[].package -> CURRENT snapshot'
+    index={'contract_version':VERSION,'CURRENT_snapshot':{'pointer':'CURRENT.json'},'tables':tables,
+        'snapshot_id':{'resolve':'CURRENT.json','field':'snapshot_id'},
+        'coverage':{'resolve':'CURRENT snapshot/coverage_summary.json'},
+        'definition_versions':{'resolve':'each verified shard snapshot/dataset_index.json','field':'definition_versions'},
         'read_order':['dataset_index.json','CURRENT.json','snapshot manifest','locator.sqlite','selected partition package','lineage'],
         'rights_status':'BLOCKED','export_allowed':False,'system_replay':'NOT ESTABLISHED'}
     PrivateStore(root).publish('dataset_index.json',encoded(index))
     # New root only. A current pointer is created once, never overwrites legacy P5.5 CURRENT.
     PrivateStore(root).publish('CURRENT.json',encoded({'snapshot_id':snapshot,'manifest':(out/'manifest.json').relative_to(root).as_posix(),
-        'manifest_sha256':file_hash(out/'manifest.json'),'contract_version':VERSION}))
+        'manifest_sha256':file_hash(out/'manifest.json'),'manifest_byte_count':(out/'manifest.json').stat().st_size,
+        'contract_version':VERSION}))
     return summary
 
 
 class PartitionedDataset:
     def __init__(self,root,*,codec=None,allow_synthetic=False):
         self.root=private_path(root);self.codec=codec;self.synthetic=allow_synthetic
-        current=json.loads((self.root/'CURRENT.json').read_bytes());path=safe_path(self.root,current['manifest'])
-        if file_hash(path)!=current['manifest_sha256']:raise ContractError('federation_manifest_changed')
-        self.manifest=json.loads(path.read_bytes())
-        if self.manifest['contract_version']!=VERSION or self.manifest['synthetic']!=allow_synthetic:raise ContractError('federation_contract_mismatch')
+        current=json.loads((self.root/'CURRENT.json').read_bytes())
+        if current['contract_version']!=VERSION or current['manifest']!='snapshots/'+current['snapshot_id']+'/manifest.json':
+            raise ContractError('federation_pointer_mismatch')
+        path=safe_path(self.root,current['manifest']);raw=path.read_bytes()
+        if (sha256(raw),len(raw))!=(current['manifest_sha256'],current['manifest_byte_count']):raise ContractError('federation_manifest_changed')
+        self.manifest=json.loads(raw)
+        if (self.manifest['contract_version']!=VERSION or self.manifest['synthetic']!=allow_synthetic or
+                self.manifest['snapshot_id']!=current['snapshot_id']):raise ContractError('federation_contract_mismatch')
         for relative,a in self.manifest['artifacts'].items():
             p=safe_path(self.root,relative)
             if p.stat().st_size!=a['byte_count'] or file_hash(p)!=a['sha256']:raise ContractError('federation_artifact_changed')

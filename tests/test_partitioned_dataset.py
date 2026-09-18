@@ -57,6 +57,21 @@ class PartitionedDatasetTests(unittest.TestCase):
         self.build();p=self.root/'snapshots/synthetic-final/locator.sqlite';p.write_bytes(p.read_bytes()+b'changed')
         with self.assertRaisesRegex(ContractError,'federation_artifact_changed'):self.load()
 
+    def test_discovery_exposes_keys_semantics_and_partition_storage(self):
+        self.build();index=json.loads((self.root/'dataset_index.json').read_bytes())
+        facts=index['tables']['canonical_facts']
+        self.assertEqual(facts['primary_key'],['fact_id']);self.assertIn('PIT',facts['meaning'])
+        self.assertIn('shards',facts['path_base']);self.assertFalse(facts['export_allowed'])
+        current=json.loads((self.root/'CURRENT.json').read_bytes())
+        self.assertEqual(current['manifest_byte_count'],(self.root/current['manifest']).stat().st_size)
+
+    def test_pointer_snapshot_and_manifest_byte_count_are_checked(self):
+        self.build();path=self.root/'CURRENT.json';current=json.loads(path.read_bytes())
+        path.write_bytes(encoded(dict(current,snapshot_id='other-snapshot')))
+        with self.assertRaisesRegex(ContractError,'federation_pointer_mismatch'):self.load()
+        path.write_bytes(encoded(dict(current,manifest_byte_count=0)))
+        with self.assertRaisesRegex(ContractError,'federation_manifest_changed'):self.load()
+
     def test_entity_merge_is_identifier_only(self):
         e={'entity_id':'edinet:E00001','edinet_code':'E00001','names':['Same'],'codes':['12340'],'document_ids':['a'],'name_evidence':[]}
         other=dict(e,names=['New'],codes=['12A40'],document_ids=['b'])
