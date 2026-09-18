@@ -1,7 +1,7 @@
-"""P3 only: normalize a frozen P2 sample and its explicit available parent closure."""
+"""P3 only: frozen P2 primary documents and metadata-discovered revision support."""
 import argparse
 from collections import Counter, defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 from pathlib import Path
 import re
@@ -9,14 +9,16 @@ import re
 from evidence_core import ContractError
 from filing_catalog import edinet_metadata
 from financial_facts import definitions, extract_candidates, canonicalize, reverse_verify, timestamp
-from financial_views import reconcile, validate_lineage, fact_view, revision_roots
+from financial_views import reconcile, validate_lineage, fact_view
 from local_edinet import LocalArchive
 from metadata_gap_audit import ReadOnlyEvidence, snapshot_fingerprints
 from p2_audit import canonical, CODE_FILES
+from revision_series import inventory_series, revision_graph
 from source_acquisition import PrivateStore, encoded, sha256, utcnow
 
 
 def document_plan(selection, frame, limit=50):
+    """Legacy parent-only frame helper; actual audits use metadata inventory_series."""
     primary = selection["challenge"] + selection["probability"]
     if len(primary) != len(set(primary)): raise ContractError("duplicate_sample_document")
     if not primary: raise ContractError("empty_p2_sample")
@@ -61,8 +63,16 @@ def metadata_document(archive, record, recorded_at, sample_kind, cache):
                        "disclosureStatus": r["disclosureStatus"], "metadata_sha256": artifact["byte_sha256"]})
     submitted = timestamp(row.get("submitDateTime"))
     at = max([submitted, *edited_times]) if submitted and None not in edited_times else None
+    variants = {k: {e["provider_fields"].get(k) for e in record["metadata_events"]}
+                for k in ("parentDocID", "edinetCode", "docTypeCode", "submitDateTime")}
+    conflicts = [reason for k, reason in (("parentDocID", "revision_parent_ambiguous"),
+        ("edinetCode", "revision_entity_ambiguous"), ("docTypeCode", "revision_type_ambiguous"),
+        ("submitDateTime", "revision_submit_time_ambiguous")) if len(variants[k]) != 1]
+    # Do not let an arbitrarily chosen later timestamp hide a possibly earlier correction.
+    if conflicts: at = None
     return {"doc_id": record["doc_id"], "edinet_code": row["edinetCode"], "secCode": row.get("secCode"),
         "parentDocID": row.get("parentDocID"), "doc_type": row.get("docTypeCode"), "sample_kind": sample_kind,
+        "parentDocIDs": sorted(p for p in variants["parentDocID"] if p), "revision_conflicts": conflicts,
         "submit_datetime": row.get("submitDateTime"), "public_available_at": at,
         "availability_basis": "metadata_submit_or_edit_upper_bound_JST", "recorded_at": recorded_at,
         "status_events": events, "metadata_locators": locators, "document_failure": None,
@@ -83,35 +93,41 @@ def run(root, p2_snapshot, private_dir, snapshot, *, synthetic=False):
     for r in map(json.loads, (prior / "universe_documents.jsonl").read_bytes().splitlines()):
         if r["doc_id"] in frame: raise ContractError("duplicate_frozen_doc_id")
         frame[r["doc_id"]] = r
-    plan = document_plan(selection, frame)
     store = PrivateStore(output)
     if any(output.iterdir()): raise ContractError("snapshot_already_exists")
     archive = ReadOnlyEvidence(root, store, provenance_class="synthetic_fixture" if synthetic else "preexisting_local_official_archive")
     if archive.root_id != manifest["archive_root_id"]: raise ContractError("archive_root_mismatch")
     config = definitions()
     code = {n: sha256((Path(__file__).parent / n).read_text(encoding="utf-8").encode()) for n in
-            (*CODE_FILES, "metadata_gap_audit.py", "financial_facts.py", "financial_views.py", "p3_audit.py", "registry/financial_definitions_v1.json")}
+            (*CODE_FILES, "metadata_gap_audit.py", "financial_facts.py", "financial_views.py", "revision_series.py", "p3_audit.py", "registry/financial_definitions_v1.json")}
     common = {"snapshot_id": snapshot, "code_sha": sha256(encoded(code)), "p2_snapshot_id": manifest["snapshot_id"],
               "definition_version": config["definition_version"], "synthetic": synthetic, "export_allowed": False}
     def save(name, obj): store.publish(name, encoded(dict(common, **obj)) + b"\n")
     def lines(name, rows): store.publish(name, b"".join(encoded(dict(common, **r)) + b"\n" for r in rows))
     now = utcnow()
+    inventory, plan, frame = inventory_series(archive, selection, frame, manifest)
+    save("revision_inventory.json", inventory)
     save("audit_plan.json", dict(plan, created_at=now, code_files=code, p2_fingerprints=before))
     save("canonical_fact_definitions.json", {"definitions": config})
     documents, all_candidates, all_facts, failures, checks, coverage = [], [], [], [], [], []
+    failures.extend(dict(f, stage="revision_inventory") for f in inventory["failures"])
     verified, cache = set(), {}
     p2_audits = {r["doc_id"]: r for r in map(json.loads, (prior / "document_audit.jsonl").read_bytes().splitlines())}
     for doc in plan["all"]:
-        kind = "challenge" if doc in selection["challenge"] else "probability" if doc in selection["probability"] else "parent_support"
+        kind = "challenge" if doc in selection["challenge"] else "probability" if doc in selection["probability"] else "revision_support"
         d = {"doc_id": doc, "edinet_code": canonical(frame[doc]).get("edinetCode"), "parentDocID": canonical(frame[doc]).get("parentDocID"),
              "public_available_at": None, "recorded_at": now, "sample_kind": kind, "document_failure": None}
         facts, candidates = [], []
         try:
             d = metadata_document(archive, frame[doc], now, kind, cache)
+            if d["revision_conflicts"]: raise ContractError("revision_metadata_ambiguous")
             if d["doc_type"] not in {"120", "130"}: raise ContractError("document_type_out_of_scope")
             paths = frame[doc]["zip_files"]
+            if not paths: raise ContractError("revision_raw_missing" if kind == "revision_support" or d["doc_type"] == "130" else "raw_missing")
             if len(paths) != 1: raise ContractError("raw_missing_or_ambiguous")
             frozen = paths[0]
+            if not (archive.root / frozen["relative_path"]).is_file():
+                raise ContractError("revision_raw_missing" if kind == "revision_support" or d["doc_type"] == "130" else "raw_missing")
             artifact = archive.observe(frozen["relative_path"], doc_id=doc)
             if (artifact["source_mtime_ns"], artifact["byte_count"]) != (frozen["mtime_ns"], frozen["byte_count"]):
                 raise ContractError("raw_changed_since_p2")
@@ -127,6 +143,7 @@ def run(root, p2_snapshot, private_dir, snapshot, *, synthetic=False):
         except ContractError as exc:
             d["document_failure"] = str(exc)
             failures.append({"doc_id": doc, "reason": str(exc), "stage": "document"})
+        d["metadata_inventory_failure"] = inventory["status"] != "PASS"
         documents.append(d)
         all_candidates.extend(candidates); all_facts.extend(facts)
         for c in candidates:
@@ -138,11 +155,24 @@ def run(root, p2_snapshot, private_dir, snapshot, *, synthetic=False):
             coverage.append({"doc_id": doc, "sample_kind": kind, "family": family, "canonical_candidates": len(fs),
                 "non_null": count, "normalized_value": None,
                 "missing_reason": None if count else d["document_failure"] or ("no_accepted_mapping" if not fs else "all_candidates_blocked")})
-    revision_roots(documents)
+    graph = revision_graph(documents)
+    failures.extend(dict(f, stage="revision_graph") for f in graph["failures"])
+    save("revision_series.json", graph)
     lineage_check = validate_lineage(all_facts, verified)
     reconciliation = reconcile(all_facts, documents)
-    views = fact_view(all_facts, documents, mode="latest_restated", snapshot_cutoff=datetime.fromisoformat(utcnow()),
+    cutoff = datetime.fromisoformat(utcnow())
+    views = fact_view(all_facts, documents, mode="latest_restated", snapshot_cutoff=cutoff,
                       allow_synthetic_for_tests=synthetic)
+    transitions = []
+    for d in documents:
+        if not d.get("parentDocID") or not d.get("public_available_at"): continue
+        at = datetime.fromisoformat(d["public_available_at"])
+        for label, decision in (("at_exclusive_boundary", at), ("after_boundary", at + timedelta(microseconds=1))):
+            if decision > cutoff: continue
+            v = fact_view(all_facts, documents, mode="as_of", snapshot_cutoff=cutoff, decision_at=decision,
+                          allow_synthetic_for_tests=synthetic)
+            transitions.append({"revision_doc_id": d["doc_id"], "boundary": label, "decision_at": decision.isoformat(),
+                "fact_ids": [f["fact_id"] for f in v["facts"]], "blocked": v["blocked"]})
     lines("documents.jsonl", documents)
     lines("xbrl_fact_candidates.jsonl", all_candidates)
     lines("canonical_facts.jsonl", all_facts)
@@ -155,6 +185,7 @@ def run(root, p2_snapshot, private_dir, snapshot, *, synthetic=False):
     lines("failure_ledger.jsonl", failures)
     save("view_audit.json", {"latest_restated_fact_ids": [f["fact_id"] for f in views["facts"]], "blocked": views["blocked"],
                               "policy": views["revision_policy"]})
+    lines("revision_as_of_audit.jsonl", transitions)
     proof = archive.prove_unchanged()
     after = snapshot_fingerprints(prior)
     if before != after: raise ContractError("p2_snapshot_changed")
@@ -162,7 +193,12 @@ def run(root, p2_snapshot, private_dir, snapshot, *, synthetic=False):
     totals = defaultdict(Counter)
     for row in coverage:
         totals[row["sample_kind"]]["documents_with_" + row["family"]] += row["non_null"] > 0
-    summary = {"primary_documents": len(plan["primary"]), "parent_support_documents": len(plan["parent_support"]),
+    summary = {"primary_documents": len(plan["primary"]), "revision_support_documents": len(plan["revision_support"]),
+        "revision_metadata_inventory": {k: v for k, v in inventory.items() if k not in {"listings", "failures"}},
+        "revision_series_count": len(graph["components"]),
+        "revision_series_blocked": sum(c["status"] == "BLOCKED" for c in graph["components"]),
+        "revision_max_depth": max((c["max_depth"] or 0 for c in graph["components"]), default=0),
+        "revision_as_of_boundaries_checked": len(transitions),
         "documents_audited": len(documents), "document_failures": sum(bool(d["document_failure"]) for d in documents),
         "numeric_candidates": len(all_candidates), "canonical_candidates": len(all_facts),
         "non_null_canonical_facts": sum(f["normalized_value"] is not None for f in all_facts),

@@ -6,6 +6,7 @@ from itertools import combinations
 
 from evidence_core import ContractError, aware
 from source_acquisition import encoded, sha256
+from revision_series import revision_graph
 
 SEMANTICS = ("metric", "period_start", "period_end", "instant_date", "period_kind", "period_class",
              "consolidation", "accounting_standard", "normalized_unit", "share_basis")
@@ -39,7 +40,7 @@ def revision_roots(documents):
 
 
 def reconcile(facts, documents):
-    roots = revision_roots(documents)
+    roots = revision_graph(documents)["roots"]
     groups = defaultdict(list)
     for f in facts:
         groups[(f["edinet_code"], f["metric"], f.get("period_start"), f.get("period_end"), f.get("instant_date"))].append(f)
@@ -74,17 +75,20 @@ def fact_view(facts, documents, *, mode, snapshot_cutoff, decision_at=None, doc_
     elif replay == "system_replay": raise ContractError("system_replay_requires_as_of")
     cutoff = decision_at if mode == "as_of" else snapshot_cutoff
     docs = {d["doc_id"]: d for d in documents}
-    roots = revision_roots(documents)
     if any(f["doc_id"] not in docs for f in facts): raise ContractError("orphan_fact_document")
-    visible, blocked = {}, []
+    # A future child (including a future branch or a missing ZIP) cannot poison an earlier view.
+    eligible = [d for d in documents if datetime.fromisoformat(d["recorded_at"]) <= snapshot_cutoff
+                and (not d.get("public_available_at") or datetime.fromisoformat(d["public_available_at"]) < cutoff)]
+    graph = revision_graph(eligible)
+    roots = graph["roots"]
+    visible, blocked = {}, list(graph["failures"])
     poisoned = set()
-    for d in documents:
-        if datetime.fromisoformat(d["recorded_at"]) > snapshot_cutoff: continue
+    for d in eligible:
         root = roots[d["doc_id"]]
-        if root is None or not d.get("public_available_at"):
-            blocked.append({"doc_id": d["doc_id"], "reason": "revision_parent_missing" if root is None else "unknown_availability"})
+        if root is None: continue
+        if not d.get("public_available_at"):
+            blocked.append({"doc_id": d["doc_id"], "reason": "unknown_availability"})
             poisoned.add(root); continue
-        if datetime.fromisoformat(d["public_available_at"]) >= cutoff: continue
         if replay == "system_replay" and (not d.get("original_provider_retrieved_at") or
                 datetime.fromisoformat(d["original_provider_retrieved_at"]) >= cutoff):
             blocked.append({"doc_id": d["doc_id"], "reason": "system_replay_acquisition_not_established"})
@@ -92,7 +96,7 @@ def fact_view(facts, documents, *, mode, snapshot_cutoff, decision_at=None, doc_
         visible[d["doc_id"]] = d
     if mode == "as_reported":
         if doc_id is None: raise ContractError("as_reported_requires_doc_id")
-        chosen = [doc_id] if doc_id in visible else []
+        chosen = [doc_id] if doc_id in visible and roots[doc_id] not in poisoned else []
     else:
         grouped = defaultdict(list)
         for d in visible.values(): grouped[roots[d["doc_id"]]].append(d)
