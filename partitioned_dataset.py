@@ -71,6 +71,7 @@ def coverage_records(documents,processed):
 def write_expansion_coverage(plan,out,processed,job_results):
     from expansion_archive import lines
     inventory=Path(plan['inventory']);months=defaultdict(set);states=Counter();years=defaultdict(Counter)
+    document_gaps=Counter();partition_gaps=Counter()
     # Older undated partitions refer to source_files by ID; dated ones embed evidence.
     references={a for p in lines(inventory/'expansion_queue.jsonl') for a in p['input_artifacts'] if isinstance(a,str)}
     referenced={}
@@ -84,6 +85,7 @@ def write_expansion_coverage(plan,out,processed,job_results):
     for r in coverage_records(lines(inventory/'document_coverage.jsonl'),processed):
         year=r['submit_date'][:4] if r['submit_date'] else 'unknown'
         years[year]['observed_documents']+=1
+        document_gaps.update(r['missing_reasons'])
         for key in ('official_original_available','source_tied','canonical_eligible','pit_eligible'):
             if r[key] is True or r[key]=='PASS':years[year][key]+=1
     def write_gzip(path,records):
@@ -144,10 +146,15 @@ def write_expansion_coverage(plan,out,processed,job_results):
                     status='COMPLETE';reason='prior_immutable_snapshot_preserved; not reclassified as new evidence'
                     r['execution_scope']='input_preservation_only'
             r.update(status=status,reason=reason,research_ready='BLOCKED',downstream_pipeline_status='see_document_coverage')
-            states[status]+=1;yield r
+            states[status]+=1
+            if status!='COMPLETE':partition_gaps[(source,status,reason)]+=1
+            yield r
     profiles['expansion_queue.jsonl.gz']=write_gzip(out/'expansion_queue.jsonl.gz',queue())
     PrivateStore(out).publish('coverage_artifact_profiles.json',encoded(profiles))
-    return {'year_document_states':{k:dict(v) for k,v in sorted(years.items())},'source_partition_states':dict(states)}
+    return {'year_document_states':{k:dict(v) for k,v in sorted(years.items())},'source_partition_states':dict(states),
+        'document_gap_counts':dict(sorted(document_gaps.items())),
+        'source_partition_gap_counts':[{'source':s,'status':status,'reason':reason,'count':n}
+            for (s,status,reason),n in sorted(partition_gaps.items())]}
 
 
 def source_catalog(plan):
@@ -212,6 +219,7 @@ def publish_federation(root,snapshot,*,codec=None,synthetic=False):
         CREATE TABLE documents (id TEXT PRIMARY KEY,entity TEXT,shard INTEGER);
     ''')
     shards=[];entities={};totals=Counter();states=Counter();years=defaultdict(Counter);blocked=[];processed={};job_results=[];source_cutoffs=[]
+    row_failure_counts=defaultdict(Counter)
     # WITHOUT ROWID enforces IDs without duplicating a multi-million-row index.
     for job in plan['jobs']:
         folder=root/'jobs'/job['job_id']
@@ -260,6 +268,8 @@ def publish_federation(root,snapshot,*,codec=None,synthetic=False):
         for f in view['facts']:processed[f['doc_id']]['canonical_eligible_facts']+=1
         for r in data.rows('pit_join_rows'):processed[r['doc_id']]['pit_pass' if r['status']=='PASS' else 'pit_blocked']+=1
         for r in data.rows('pit_join_rows'):states[r['status']]+=1;years[year]['PIT_'+r['status']]+=1
+        for r in data.tables['failures']:
+            row_failure_counts[r['input_stage']][payload(r).get('reason') or 'reason_unspecified_in_source_ledger']+=1
         db.commit()
     db.executemany('INSERT INTO entities VALUES (?,?)',[(k,encoded(v)) for k,v in sorted(entities.items())])
     # Occurrence counts are deliberately not mislabeled as unique upstream evidence.
@@ -274,6 +284,7 @@ def publish_federation(root,snapshot,*,codec=None,synthetic=False):
         'snapshot_cutoff_basis':'maximum verified input P3 snapshot cutoff' if source_cutoffs else 'no completed input snapshot',
         'created_at':utcnow(),'code_sha':file_hash(Path(__file__)),'coverage_unique_ids':counts,'table_occurrences':dict(totals),
         'join_states':dict(states),'year_states':{k:dict(v) for k,v in sorted(years.items())},'complete_partitions':len(shards),
+        'failure_reason_occurrences':{stage:dict(sorted(c.items())) for stage,c in sorted(row_failure_counts.items())},
         'blocked_partitions':len(blocked),'blocked_documents':plan['blocked_documents'],
         'rights_status':'BLOCKED','export_allowed':False,'full_market_representativeness':'NOT ESTABLISHED',
         'system_replay':'NOT ESTABLISHED','original_bytes_rechecked':'see input preservation proof',
@@ -281,7 +292,15 @@ def publish_federation(root,snapshot,*,codec=None,synthetic=False):
         'stage_content_resolution':'checkpoint -> evidence_manifest (ZIP member or verified package reconstruction) -> stage snapshot/file/line -> original',
         **expansion}
     store.publish('coverage_summary.json',encoded(summary))
-    store.publish('gap_ledger.jsonl',b''.join(encoded(r)+b'\n' for r in blocked+plan['blocked_documents']))
+    gaps=[dict(r,scope='execution_job') for r in blocked]+[dict(r,scope='execution_document') for r in plan['blocked_documents']]
+    gaps.extend({'scope':'document_gap_summary','reason':reason,'documents':n,'detail_artifact':'document_coverage.jsonl.gz',
+        'detail_field':'missing_reasons'} for reason,n in expansion.get('document_gap_counts',{}).items())
+    gaps.extend(dict(r,scope='source_partition_gap_summary',detail_artifact='expansion_queue.jsonl.gz')
+        for r in expansion.get('source_partition_gap_counts',[]))
+    gaps.extend({'scope':'row_failure_occurrences','input_stage':stage,'reason':reason,'occurrences':n,
+        'detail_table':'failures','detail_packages':'manifest.shards[].package','independent_evidence_increment':0}
+        for stage,counts_ in sorted(row_failure_counts.items()) for reason,n in sorted(counts_.items()))
+    store.publish('gap_ledger.jsonl',b''.join(encoded(r)+b'\n' for r in gaps))
     if gate:store.publish('acceptance_gate.json',encoded(gate))
     if not synthetic:store.publish('source_catalog.json',encoded(source_catalog(plan)))
     # Chat views are existing shard CSVs, plus the global entity and filing indices in SQLite.
@@ -358,6 +377,7 @@ class PartitionedDataset:
             if command=='filings':return {'rows':docs}
             if command=='joins':return {'rows':joins,'execution_claim':False}
             at=datetime.fromisoformat(args['as_of']);aware(at)
+            if not docs:return {'facts':[],'blocked':[{'reason':'entity_not_in_snapshot'}]}
             return fact_view(facts,docs,mode='as_of',decision_at=at,snapshot_cutoff=datetime.fromisoformat(self.index['snapshot_cutoff']),
                 replay=args.get('replay','public_reconstruction'),allow_synthetic_for_tests=self.synthetic)
         if command in ('compare','failures'):

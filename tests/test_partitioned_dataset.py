@@ -54,6 +54,20 @@ class PartitionedDatasetTests(unittest.TestCase):
         ledger=(self.root/'snapshots/synthetic-final/gap_ledger.jsonl').read_bytes()
         self.assertIn(b'synthetic_block',ledger)
 
+    def test_completed_jobs_keep_rights_and_row_failures_in_global_gap_ledger(self):
+        summary=self.build();self.assertEqual(summary['blocked_partitions'],0)
+        gaps=[json.loads(line) for line in (self.root/'snapshots/synthetic-final/gap_ledger.jsonl').read_bytes().splitlines()]
+        rows=[r for r in gaps if r.get('scope')=='row_failure_occurrences']
+        self.assertTrue(any(r['reason']=='rights_unresolved' for r in rows))
+        self.assertTrue(any(r['reason']=='synthetic_text_difference' for r in rows))
+        self.assertTrue(all(r['detail_table']=='failures' and r['independent_evidence_increment']==0 for r in rows))
+        self.assertGreater(summary['failure_reason_occurrences']['p5']['rights_unresolved'],0)
+
+    def test_unknown_entity_has_reasoned_empty_fact_result(self):
+        self.build();d=self.load()
+        result=d.query('facts',entity='edinet:SYNTHETIC_UNKNOWN',as_of=self.f.fact['public_available_at'])
+        self.assertEqual(result,{'facts':[],'blocked':[{'reason':'entity_not_in_snapshot'}]})
+
     def test_index_corruption_rejected(self):
         self.build();p=self.root/'snapshots/synthetic-final/locator.sqlite';p.write_bytes(p.read_bytes()+b'changed')
         with self.assertRaisesRegex(ContractError,'federation_artifact_changed'):self.load()
@@ -158,6 +172,8 @@ class PartitionedDatasetTests(unittest.TestCase):
         summary=write_expansion_coverage({'inventory':str(inv),'archive_index':str(idx),'row_cache':str(self.root/'absent')},out,state,
             [{'job_id':'one','doc_ids':['a'],'status':'COMPLETE'}])
         self.assertIn('unknown',summary['year_document_states'])
+        self.assertEqual(summary['document_gap_counts']['official_original_not_available'],1)
+        self.assertTrue(any(r['status']=='UNKNOWN' for r in summary['source_partition_gap_counts']))
         with gzip.open(out/'expansion_queue.jsonl.gz','rt') as f:observed=[json.loads(x) for x in f]
         self.assertEqual(observed[0]['status'],'COMPLETE')
         self.assertEqual(observed[1]['reason'],'jquants_row_cache_missing_or_failed')

@@ -90,6 +90,9 @@ canonical/PIT合格、source tie、rights、研究利用可否を混同しない
 `expansion_queue.jsonl.gz`のCOMPLETEは`execution_scope`に記した工程の完了である。
 metadata/source inventory完了をPIT完了に読み替えない。元のUNKNOWN/BLOCKEDも`prior_status`で保持する。
 P4対象外のTOPIXや、原本がない加工行の依存不足を消さない。
+`gap_ledger.jsonl`には実行不能区画に加え、document coverageの欠損、source partitionの
+BLOCKED/UNKNOWN、各partitionの行単位failureの理由別件数と詳細参照先を残す。
+同じ元行が複数監査に出現する場合はoccurrence数であり、独立証拠数や市場エラー率ではない。
 
 `source_catalog.json`は全ローカルmetadata・加工行index・検証済みJ-Quants cacheへの私有参照を持つ。
 PITに結合されなかったsource行も所在とhashを追跡できるが、canonical/PIT値へ昇格しない。
